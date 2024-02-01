@@ -666,6 +666,22 @@ Indices:
       RETURN opensearch_data
       ORDER BY opensearch_data.study_code
     "
+# diagnosis index
+  - index_name: diagnosis
+    type: neo4j
+    # type mapping for each property of the index
+    mapping:
+      diagnosis_id:
+        type: keyword
+      site:
+        type: keyword
+    # Cypher query will be used to retrieve data from Neo4j, and index into Elasticsearch
+    cypher_query: "
+      MATCH (n:diagnosis)
+      RETURN
+        n.diagnosis_id AS diagnosis_id,
+        n.primary_site AS site
+      "
 # Subject IDs index
   - index_name: subject_ids
     type: neo4j
