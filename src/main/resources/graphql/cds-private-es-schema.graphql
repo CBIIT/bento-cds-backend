@@ -202,6 +202,11 @@ schema {
 }
 
 type QueryType {
+    numberOfStudies: Int
+    numberOfSubjects: Int
+    numberOfSamples: Int
+    numberOfFiles: Int
+    numberOfDiseaseSites: Int
     searchSubjects (
         subject_ids: [String] = [],
 
