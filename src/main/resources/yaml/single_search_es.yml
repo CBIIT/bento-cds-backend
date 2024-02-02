@@ -44,3 +44,11 @@ queries:
     result:
       type: int
       method: count_bucket_keys
+  - name: diagnosis
+    index:
+      - diagnosis
+    filter:
+      type: pagination
+      defaultSortField: diagnosis_id
+    result:
+      type: object_array
