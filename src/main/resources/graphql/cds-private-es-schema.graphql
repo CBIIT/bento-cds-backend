@@ -16,6 +16,114 @@ type Diagnosis {
   days_to_last_followup: Int
   last_known_disease_status: String
   days_to_last_known_status: Int
+  participant_id: String
+}
+
+type File {
+  file_id: String
+  file_name: String
+  file_type: String
+  file_description: String
+  file_size: Float
+  md5sum: String
+  file_url_in_cds: String
+  experimental_strategy_and_data_subtypes: String
+}
+
+type Study {
+  study_name: String
+  study_acronym: String
+  study_description: String
+  short_description: String
+  study_external_url: String
+  primary_investigator_name: String
+  primary_investigator_email: String
+  co_investigator_name: String
+  co_investigator_email: String
+  phs_accession: String
+  bioproject_accession: String
+  index_date: String
+  cds_requestor: String
+  funding_agency: String
+  funding_source_program_name: String
+  grant_id: String
+  clinical_trial_system: String
+  clinical_trial_identifier: String
+  clinical_trial_arm: String
+  organism_species: String
+  adult_or_childhood_study: String
+  data_types: String
+  file_types: String
+  data_access_level: String
+  cds_primary_bucket: String
+  cds_secondary_bucket: String
+  cds_tertiary_bucket: String
+  number_of_participants: Float
+  number_of_samples: Float
+  study_data_types: String
+  file_types_and_format: String
+  size_of_data_being_uploaded: Float
+  size_of_data_being_uploaded_unit: String
+  size_of_data_being_uploaded_original: Float
+  size_of_data_being_uploaded_original_unit: String
+  acl: String
+  study_access: String
+}
+
+type Treatment {
+  treatment_id: String
+  treatment_type: String
+  treatment_outcome: String
+  days_to_treatment: Int
+  therapeutic_agents: String
+}
+
+
+type Specimen {
+  specimen_id: String
+  participant_id: participant_id
+}
+
+type Genomic_Info {
+  library_id: String
+  bases: Int
+  number_of_reads: Int
+  avg_read_length: Float
+  coverage: Float
+  reference_genome_assembly: String
+  custom_assembly_fasta_file_for_alignment: String
+  design_description: String
+  library_strategy: String
+  library_layout: String
+  library_source: String
+  library_selection: String
+  platform: String
+  instrument_model: String
+  sequence_alignment_software: String
+  file_id: String
+}
+
+type Participant {
+  participant_id: String
+  race: String
+  gender: String
+  ethnicity: String
+  dbGaP_subject_id: String
+  study_id: String
+}
+
+type Sample {
+  sample_id: String
+  sample_type: String
+  sample_tumor_status: String
+  sample_anatomic_site: String
+  sample_age_at_collection: Int
+  derived_from_specimen: String
+  biosample_accession: String
+  participant_id: String
+  genomic_info_id: String
+  #specimen: specimen @relation(name:"of_specimen", direction:OUT)
+  #genomic_info: [genomic_info] @relation(name:"in_genomic_info", direction:OUT)
 }
 
 type SubjectOverview {
@@ -182,6 +290,7 @@ type GS_About {
 
 type GS_Program {
     program_name: String
+    program_acronym: String
     program_short_description: String
     program_full_description: String
     program_external_url: String
@@ -248,6 +357,131 @@ type QueryType {
         last_known_disease_status: String,
         days_to_last_known_status: Int
     ): [Diagnosis]
+
+    file (
+        first: Int = 2500,
+        offset: Int = 0,
+        file_id: String,
+        file_name: String,
+        file_type: String,
+        file_description: String,
+        file_size: Float,
+        md5sum: String,
+        file_url_in_cds: String,
+        experimental_strategy_and_data_subtypes: String
+    ): [File]
+
+    program (
+        first: Int = 2500,
+        offset: Int = 0,
+        program_name: String,
+        program_acronym: String,
+        program_short_description: String,
+        program_full_description: String,
+        program_external_url: String,
+        program_sort_order: Int
+    ): [GS_Program]
+
+    treatment (
+        first: Int = 2500,
+        offset: Int = 0,
+        treatment_id: String,
+        treatment_type: String,
+        treatment_outcome: String,
+        days_to_treatment: Int,
+        therapeutic_agents: String
+    ): [Treatment]
+
+    study (
+        first: Int = 2500,
+        offset: Int = 0,
+		study_name: String,
+		study_acronym: String,
+		study_description: String,
+		short_description: String,
+		study_external_url: String,
+		primary_investigator_name: String,
+		primary_investigator_email: String,
+		co_investigator_name: String,
+		co_investigator_email: String,
+		phs_accession: String,
+		bioproject_accession: String,
+		index_date: String,
+		cds_requestor: String,
+		funding_agency: String,
+		funding_source_program_name: String,
+		grant_id: String,
+		clinical_trial_system: String,
+		clinical_trial_identifier: String,
+		clinical_trial_arm: String,
+		organism_species: String,
+		adult_or_childhood_study: String,
+		data_types: String,
+		file_types: String,
+		data_access_level: String,
+		cds_primary_bucket: String,
+		cds_secondary_bucket: String,
+		cds_tertiary_bucket: String,
+		number_of_participants: Float,
+		number_of_samples: Float,
+		study_data_types: String,
+		file_types_and_format: String,
+		size_of_data_being_uploaded: Float,
+		size_of_data_being_uploaded_unit: String,
+		size_of_data_being_uploaded_original: Float,
+		size_of_data_being_uploaded_original_unit: String,
+		acl: String,
+		study_access: String
+    ): [study]
+
+    specimen (
+        first: Int = 2500,
+        offset: Int = 0,
+        specimen_id: String
+    ): [Specimen]
+
+    genomic_info (
+        first: Int = 2500,
+        offset: Int = 0,
+        library_id: String,
+        bases: Int,
+        number_of_reads: Int,
+        avg_read_length: Float,
+        coverage: Float,
+        reference_genome_assembly: String,
+        custom_assembly_fasta_file_for_alignment: String,
+        design_description: String,
+        library_strategy: String,
+        library_layout: String,
+        library_source: String,
+        library_selection: String,
+        platform: String,
+        instrument_model: String,
+        sequence_alignment_software: String
+    ): [Genomic_Info]
+
+    participant (
+        first: Int = 2500,
+        offset: Int = 0,
+        participant_id: String,
+        race: String,
+        gender: String,
+        ethnicity: String,
+        dbGaP_subject_id: String
+    ): [Participant]
+
+    sample (
+        first: Int = 2500,
+        offset: Int = 0,
+        sample_id: String,
+        sample_type: String,
+        sample_tumor_status: String,
+        sample_anatomic_site: String,
+        sample_age_at_collection: Int,
+        derived_from_specimen: String,
+        biosample_accession: String
+    ): [Sample]
+
     searchSubjects (
         subject_ids: [String] = [],
 

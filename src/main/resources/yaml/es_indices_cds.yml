@@ -145,6 +145,18 @@ Indices:
         type: keyword
       file_types:
         type: keyword
+      sample_type:
+        type: keyword
+      sample_tumor_status:
+        type: keyword
+      sample_anatomic_site:
+        type: keyword
+      sample_age_at_collection:
+        type: integer
+      derived_from_specimen:
+        type: keyword
+      biosample_accession:
+        type: keyword
       genders:
         type: keyword
       instrument_models:
@@ -195,6 +207,12 @@ Indices:
         type: keyword
       subject_ids:
         type: keyword
+      participant_id:
+        type: keyword
+      genomic_info_id:
+        type: keyword
+      specimen_id:
+        type: keyword
 
     # Cypher query will be used to retrieve data from Neo4j, and index into Elasticsearch
     cypher_query: "
@@ -221,7 +239,13 @@ Indices:
           is_tumor: samp.sample_tumor_status,
           analyte_type: samp.sample_type,
           sample_id: samp.sample_id,
-          sample_ids: samp.sample_id
+          sample_ids: samp.sample_id,
+          sample_type: samp.sample_type,
+          sample_tumor_status: samp.sample_tumor_status,
+          sample_anatomic_site: samp.sample_anatomic_site,
+          sample_age_at_collection: samp.sample_age_at_collection,
+          derived_from_specimen: samp.derived_from_specimen,
+          biosample_accession: samp.biosample_accession
         }) AS opensearch_data
       WITH samp, na, 
       apoc.map.merge(opensearch_data, {
@@ -243,21 +267,25 @@ Indices:
           files: apoc.coll.sort(COLLECT(DISTINCT COALESCE(f.file_id, na)))
         }) AS opensearch_data
       OPTIONAL MATCH (samp)<--(:file)<--(g:genomic_info)
-      WITH samp, na, 
+      OPTIONAL MATCH (samp)-->(spec:specimen)
+      WITH samp, na,
         apoc.map.merge(opensearch_data, {
-          library_layouts: apoc.coll.sort(COLLECT(DISTINCT COALESCE(g.library_layout, na))), 
-          library_selections: apoc.coll.sort(COLLECT(DISTINCT COALESCE(g.library_selection, na))), 
-          library_sources: apoc.coll.sort(COLLECT(DISTINCT COALESCE(g.library_source, na))), 
+          library_layouts: apoc.coll.sort(COLLECT(DISTINCT COALESCE(g.library_layout, na))),
+          library_selections: apoc.coll.sort(COLLECT(DISTINCT COALESCE(g.library_selection, na))),
+          library_sources: apoc.coll.sort(COLLECT(DISTINCT COALESCE(g.library_source, na))),
           library_strategies: apoc.coll.sort(COLLECT(DISTINCT COALESCE(g.library_strategy, na))),
           instrument_models: apoc.coll.sort(COLLECT(DISTINCT COALESCE(g.instrument_model, na))),
           platforms: apoc.coll.sort(COLLECT(DISTINCT COALESCE(g.platform, na))),
-          reference_genome_assemblies: apoc.coll.sort(COLLECT(DISTINCT COALESCE(g.reference_genome_assembly, na)))
+          reference_genome_assemblies: apoc.coll.sort(COLLECT(DISTINCT COALESCE(g.reference_genome_assembly, na))),
+          genomic_info_id: apoc.coll.sort(COLLECT(DISTINCT COALESCE(g.genomic_info_id, na))),
+          specimen_id: spec.specimen_id
         }) AS opensearch_data
-      OPTIONAL MATCH (samp)-->(:participant)<--(diag:diagnosis)
-      WITH samp, na, 
+      OPTIONAL MATCH (samp)-->(p:participant)<--(diag:diagnosis)
+      WITH samp, na,
         apoc.map.merge(opensearch_data, {
           primary_diagnoses: apoc.coll.sort(COLLECT(DISTINCT COALESCE(diag.primary_diagnosis, na))),
-          site: apoc.coll.sort(COLLECT(DISTINCT COALESCE(diag.primary_site, na)))
+          site: apoc.coll.sort(COLLECT(DISTINCT COALESCE(diag.primary_site, na))),
+          participant_id: p.participant_id
         }) AS opensearch_data
       RETURN opensearch_data
       ORDER BY opensearch_data.sample_id
@@ -390,6 +418,12 @@ Indices:
         type: keyword
       experimental_strategies:
         type: keyword
+      experimental_strategy_and_data_subtypes:
+        type: keyword
+      file_description:
+        type: keyword
+      file_url_in_cds:
+        type: keyword
       file_types:
         type: keyword
       genders:
@@ -508,16 +542,19 @@ Indices:
         apoc.coll.sort(apoc.coll.toSet(apoc.coll.flatten(COLLECT(coalesce(apoc.text.split(f.experimental_strategy_and_data_subtypes,\"[;,]\\s{0,1}\"), na)),true))) AS experimental_strategy_and_data_subtypes
       WITH f, na, 
         apoc.map.merge(opensearch_data, {
-          experimental_strategies: experimental_strategy_and_data_subtypes,
           file_types: file_type ,
           files: f.file_id,
           file_id: f.file_id,
           file_ids: f.file_id,
           file_name: f.file_name,
           file_names: f.file_name,
-          file_type: file_type,
           file_size: f.file_size,
+          file_type: file_type,
+          file_description: f.file_description,
+          file_url_in_cds: f.file_url_in_cds,
           md5sum: f.md5sum,
+          experimental_strategy_and_data_subtypes: experimental_strategy_and_data_subtypes,
+          experimental_strategies: experimental_strategy_and_data_subtypes,
           experimental_strategies_gs: experimental_strategy_and_data_subtypes,
           file_type_gs: f.file_type ,
           file_id_gs: f.file_id,
@@ -586,12 +623,280 @@ Indices:
       RETURN opensearch_data
       ORDER BY opensearch_data.files
     "
-# Programs index
+
+  # Study index
+  - index_name: study
+    type: neo4j
+    # type mapping for each property of the index
+    mapping:
+      study_name:
+        type: keyword
+      study_acronym:
+        type: keyword
+      study_description:
+        type: keyword
+      short_description:
+        type: keyword
+      study_external_url:
+        type: keyword
+      primary_investigator_name:
+        type: keyword
+      primary_investigator_email:
+        type: keyword
+      co_investigator_name:
+        type: keyword
+      co_investigator_email:
+        type: keyword
+      phs_accession:
+        type: keyword
+      bioproject_accession:
+        type: keyword
+      index_date:
+        type: keyword
+      cds_requestor:
+        type: keyword
+      funding_agency:
+        type: keyword
+      funding_source_program_name:
+        type: keyword
+      grant_id:
+        type: keyword
+      clinical_trial_system:
+        type: keyword
+      clinical_trial_identifier:
+        type: keyword
+      clinical_trial_arm:
+        type: keyword
+      organism_species:
+        type: keyword
+      adult_or_childhood_study:
+        type: keyword
+      data_types:
+        type: keyword
+      file_types:
+        type: keyword
+      data_access_level:
+        type: keyword
+      cds_primary_bucket:
+        type: keyword
+      cds_secondary_bucket:
+        type: keyword
+      cds_tertiary_bucket:
+        type: keyword
+      number_of_participants:
+        type: keyword
+      number_of_samples:
+        type: Float
+      file_types_and_format:
+        type: keyword
+      size_of_data_being_uploaded:
+        type: Float
+      size_of_data_being_uploaded_unit:
+        type: keyword
+      size_of_data_being_uploaded_original:
+        type: Float
+      size_of_data_being_uploaded_original_unit:
+        type: keyword
+      acl:
+        type: keyword
+      study_access:
+        type: keyword
+      program_name:
+        type: keyword
+      program_acronym:
+        type: keyword
+
+    # Cypher query will be used to retrieve data from Neo4j, and index into Elasticsearch
+    cypher_query: "
+      MATCH (s:study)
+      OPTIONAL MATCH (s)-->(p:program)
+      RETURN
+          s.study_name as study_name,
+          s.study_acronym as study_acronym,
+          s.study_description as study_description,
+          s.short_description as short_description,
+          s.study_external_url as study_external_url,
+          s.primary_investigator_name as primary_investigator_name,
+          s.primary_investigator_email as primary_investigator_email,
+          s.co_investigator_name as co_investigator_name,
+          s.co_investigator_email as co_investigator_email,
+          s.phs_accession as phs_accession,
+          s.bioproject_accession as bioproject_accession,
+          s.index_date as index_date,
+          s.cds_requestor as cds_requestor,
+          s.funding_agency as funding_agency,
+          s.funding_source_program_name as funding_source_program_name,
+          s.grant_id as grant_id,
+          s.clinical_trial_system as clinical_trial_system,
+          s.clinical_trial_identifier as clinical_trial_identifier,
+          s.clinical_trial_arm as clinical_trial_arm,
+          s.organism_species as organism_species,
+          s.adult_or_childhood_study as adult_or_childhood_study,
+          s.data_types as data_types,
+          s.file_types as file_types,
+          s.data_access_level as data_access_level,
+          s.cds_primary_bucket as cds_primary_bucket,
+          s.cds_secondary_bucket as cds_secondary_bucket,
+          s.cds_tertiary_bucket as cds_tertiary_bucket,
+          s.number_of_participants as number_of_participants,
+          s.number_of_samples as number_of_samples,
+          s.file_types_and_format as file_types_and_format,
+          s.size_of_data_being_uploaded as size_of_data_being_uploaded,
+          s.size_of_data_being_uploaded_unit as size_of_data_being_uploaded_unit,
+          s.size_of_data_being_uploaded_original as size_of_data_being_uploaded_original,
+          s.size_of_data_being_uploaded_original_unit as size_of_data_being_uploaded_original_unit,
+          s.acl as acl,
+          s.study_access as study_access,
+          p.program_name as program_name,
+          p.program_acronym as program_acronym
+    "
+
+  - index_name: specimen
+    type: neo4j
+    # type mapping for each property of the index
+    mapping:
+      specimen_id:
+        type: keyword
+    # Cypher query will be used to retrieve data from Neo4j, and index into Elasticsearch
+    cypher_query: "
+      MATCH (s:specimen)
+      RETURN
+        s.specimen_id AS specimen_id
+    "
+  - index_name: genomic_info
+    type: neo4j
+    # type mapping for each property of the index
+    mapping:
+      library_id:
+        type: keyword
+      bases:
+        type: long
+      number_of_reads:
+        type: long
+      avg_read_length:
+        type: float
+      coverage:
+        type: float
+      reference_genome_assembly:
+        type: keyword
+      custom_assembly_fasta_file_for_alignment:
+        type: keyword
+      design_description:
+        type: keyword
+      library_strategy:
+        type: keyword
+      library_layout:
+        type: keyword
+      library_selection:
+        type: keyword
+      platform:
+        type: keyword
+      instrument_model:
+        type: keyword
+      sequence_alignment_software:
+        type: keyword
+      file_id:
+        type: keyword
+    # Cypher query will be used to retrieve data from Neo4j, and index into Elasticsearch
+    cypher_query: "
+      MATCH (g:genomic_info)
+      OPTIONAL MATCH (g)-->(f:file)
+      RETURN
+        g.library_id AS library_id,
+        g.bases AS bases,
+        g.number_of_reads AS number_of_reads,
+        g.avg_read_length AS avg_read_length,
+        g.coverage AS coverage,
+        g.reference_genome_assembly AS reference_genome_assembly,
+        g.custom_assembly_fasta_file_for_alignment AS custom_assembly_fasta_file_for_alignment,
+        g.design_description AS design_description,
+        g.library_strategy AS library_strategy,
+        g.library_layout AS library_layout,
+        g.library_source AS library_source,
+        g.library_selection AS library_selection,
+        g.platform AS platform,
+        g.instrument_model AS instrument_model,
+        g.sequence_alignment_software AS sequence_alignment_software,
+        f.file_id AS file_id
+    "
+
+  - index_name: diagnosis
+    type: neo4j
+    # type mapping for each property of the index
+    mapping:
+      diagnosis_id:
+        type: keyword
+      disease_type:
+        type: keyword
+      vital_status:
+        type: keyword
+      primary_diagnosis:
+        type: keyword
+      primary_site:
+        type: keyword
+      site:
+        type: keyword
+      age_at_diagnosis:
+        type: keyword
+      tumor_grade:
+        type: keyword
+      tumor_stage_clinical_m:
+        type: keyword
+      tumor_stage_clinical_n:
+        type: keyword
+      tumor_stage_clinical_t:
+        type: keyword
+      morphology:
+        type: keyword
+      incidence_type:
+        type: keyword
+      progression_or_recurrence:
+        type: keyword
+      days_to_recurrence:
+        type: keyword
+      days_to_last_followup:
+        type: keyword
+      last_known_disease_status:
+        type: keyword
+      days_to_last_known_status:
+        type: keyword
+      participant_id:
+        type: keyword
+
+    # Cypher query will be used to retrieve data from Neo4j, and index into Elasticsearch
+    cypher_query: "
+      MATCH (n:diagnosis)
+      OPTIONAL MATCH (n)-->(p:participant)
+      RETURN
+        n.diagnosis_id AS diagnosis_id,
+        n.disease_type AS disease_type,
+        n.vital_status AS vital_status,
+        n.primary_diagnosis AS primary_diagnosis,
+        n.primary_site AS primary_site,
+        n.primary_site AS site,
+        n.age_at_diagnosis AS age_at_diagnosis,
+        n.tumor_grade AS tumor_grade,
+        n.tumor_stage_clinical_m AS tumor_stage_clinical_m,
+        n.tumor_stage_clinical_n AS tumor_stage_clinical_n,
+        n.tumor_stage_clinical_t AS tumor_stage_clinical_t,
+        n.morphology AS morphology,
+        n.incidence_type AS incidence_type,
+        n.progression_or_recurrence AS progression_or_recurrence,
+        n.days_to_recurrence AS days_to_recurrence,
+        n.days_to_last_followup AS days_to_last_followup,
+        n.last_known_disease_status AS last_known_disease_status,
+        n.days_to_last_known_status AS days_to_last_known_status,
+        p.participant_id AS participant_id
+      "
+
+  # Programs index
   - index_name: programs
     type: neo4j
     # type mapping for each property of the index
     mapping:
       program_name:
+        type: search_as_you_type
+      program_acronym:
         type: search_as_you_type
       program_short_description:
         type: search_as_you_type
@@ -605,29 +910,26 @@ Indices:
         type: keyword
     # Cypher query will be used to retrieve data from Neo4j, and index into Elasticsearch
     cypher_query: "
-      MATCH (p:program)
-      WITH p, \"program\" as type
-      RETURN
-        p.program_name AS program_name,
-        p.program_short_description AS program_short_description,
-        p.program_full_description AS program_full_description,
-        p.program_external_url AS program_external_url,
-        p.program_sort_order AS program_sort_order,
-        p.program_sort_order AS program_sort_order_kw,
-        type
-    "
-# Studies index
+    MATCH (p:program)
+    WITH p, \"program\" as type
+    RETURN
+      p.program_name AS program_name,
+      p.program_acronym AS program_acronym,
+      p.program_short_description AS program_short_description,
+      p.program_full_description AS program_full_description,
+      p.program_external_url AS program_external_url,
+      p.program_sort_order AS program_sort_order,
+      p.program_sort_order AS program_sort_order_kw,
+      type
+  "
+  # Studies index
   - index_name: studies
     type: neo4j
     # type mapping for each property of the index
     mapping:
       study_code:
         type: keyword
-      phs_accession:
-        type: keyword
       study_data_types:
-        type: keyword
-      acl:
         type: keyword
       study_code_gs:
         type: search_as_you_type
@@ -637,7 +939,82 @@ Indices:
         type: search_as_you_type
       study_data_types_gs:
         type: search_as_you_type
-
+      study_name:
+        type: keyword
+      study_acronym:
+        type: keyword
+      study_description:
+        type: keyword
+      short_description:
+        type: keyword
+      study_external_url:
+        type: keyword
+      primary_investigator_name:
+        type: keyword
+      primary_investigator_email:
+        type: keyword
+      co_investigator_name:
+        type: keyword
+      co_investigator_email:
+        type: keyword
+      phs_accession:
+        type: keyword
+      bioproject_accession:
+        type: keyword
+      index_date:
+        type: keyword
+      cds_requestor:
+        type: keyword
+      funding_agency:
+        type: keyword
+      funding_source_program_name:
+        type: keyword
+      grant_id:
+        type: keyword
+      clinical_trial_system:
+        type: keyword
+      clinical_trial_identifier:
+        type: keyword
+      clinical_trial_arm:
+        type: keyword
+      organism_species:
+        type: keyword
+      adult_or_childhood_study:
+        type: keyword
+      data_types:
+        type: keyword
+      file_types:
+        type: keyword
+      data_access_level:
+        type: keyword
+      cds_primary_bucket:
+        type: keyword
+      cds_secondary_bucket:
+        type: keyword
+      cds_tertiary_bucket:
+        type: keyword
+      number_of_participants:
+        type: keyword
+      number_of_samples:
+        type: float
+      file_types_and_format:
+        type: keyword
+      size_of_data_being_uploaded:
+        type: float
+      size_of_data_being_uploaded_unit:
+        type: keyword
+      size_of_data_being_uploaded_original:
+        type: float
+      size_of_data_being_uploaded_original_unit:
+        type: keyword
+      acl:
+        type: keyword
+      study_access:
+        type: keyword
+      program_name:
+        type: keyword
+      program_acronym:
+        type: keyword
 
     # Cypher query will be used to retrieve data from Neo4j, and index into Elasticsearch
     cypher_query: "
@@ -651,12 +1028,48 @@ Indices:
         study_name_gs: s.study_name,
         study_data_types: s.study_data_types,
         study_data_types_gs: s.study_data_types,
-        acl: s.acl
+        short_description: s.short_description,
+        study_acronym: s.study_acronym,
+        study_description: s.study_description,
+        study_external_url: s.study_external_url,
+        primary_investigator_name: s.primary_investigator_name,
+        primary_investigator_email: s.primary_investigator_email,
+        co_investigator_name: s.co_investigator_name,
+        co_investigator_email: s.co_investigator_email,
+        bioproject_accession: s.bioproject_accession,
+        index_date: s.index_date,
+        cds_requestor: s.cds_requestor,
+        funding_agency: s.funding_agency,
+        funding_source_program_name: s.funding_source_program_name,
+        grant_id: s.grant_id,
+        clinical_trial_system: s.clinical_trial_system,
+        clinical_trial_identifier: s.clinical_trial_identifier,
+        clinical_trial_arm: s.clinical_trial_arm,
+        organism_species: s.organism_species,
+        adult_or_childhood_study: s.adult_or_childhood_study,
+        data_types: s.data_types,
+        file_types: s.file_types,
+        data_access_level: s.data_access_level,
+        cds_primary_bucket: s.cds_primary_bucket,
+        cds_secondary_bucket: s.cds_secondary_bucket,
+        cds_tertiary_bucket: s.cds_tertiary_bucket,
+        number_of_participants: s.number_of_participants,
+        number_of_samples: s.number_of_samples,
+        file_types_and_format: s.file_types_and_format,
+        size_of_data_being_uploaded: s.size_of_data_being_uploaded,
+        size_of_data_being_uploaded_unit: s.size_of_data_being_uploaded_unit,
+        size_of_data_being_uploaded_original: s.size_of_data_being_uploaded_original,
+        size_of_data_being_uploaded_original_unit: s.size_of_data_being_uploaded_original_unit,
+        acl: s.acl,
+        study_access: s.study_access
       } AS opensearch_data
       OPTIONAL MATCH (s)<--(p:participant)
-      WITH s, 
+      OPTIONAL MATCH (s)-->(pro:program)
+      WITH s,
         apoc.map.merge(opensearch_data, {
-          number_of_participants: COUNT(DISTINCT p)
+          number_of_participants: COUNT(DISTINCT p),
+          program_acronym: pro.program_acronym,
+          program_name: pro.program_name
         }) AS opensearch_data
       OPTIONAL MATCH (s)<--(:participant)<--(samp:sample)
       WITH s, 
