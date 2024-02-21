@@ -385,8 +385,6 @@ type QueryType {
 		therapeutic_agents: String
     ): [treatment]
 
-    schemaVersion: String @cypher(statement: "RETURN '1.2.0'")
-
     "Get lists of all subject ids, used by Local Find"
     idsLists: IdsLists @cypher(statement: """
         MATCH (p:participant)

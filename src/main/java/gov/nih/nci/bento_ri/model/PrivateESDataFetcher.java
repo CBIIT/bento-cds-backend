@@ -28,6 +28,7 @@ import static graphql.schema.idl.TypeRuntimeWiring.newTypeWiring;
 @Component
 public class PrivateESDataFetcher extends AbstractPrivateESDataFetcher {
     private static final Logger logger = LogManager.getLogger(PrivateESDataFetcher.class);
+    private static final String SCHEMA_VERSION = "1.2.0";
     private final YamlQueryFactory yamlQueryFactory;
     private final TypeMapperService typeMapper = new TypeMapperImpl();
 
@@ -82,6 +83,7 @@ public class PrivateESDataFetcher extends AbstractPrivateESDataFetcher {
     public RuntimeWiring buildRuntimeWiring() throws IOException {
         return RuntimeWiring.newRuntimeWiring()
                 .type(newTypeWiring("QueryType")
+                        .dataFetcher("schemaVersion", env -> SCHEMA_VERSION)
                         .dataFetchers(yamlQueryFactory.createYamlQueries(Const.ES_ACCESS_TYPE.PRIVATE))
                         .dataFetcher("searchSubjects", env -> {
                             Map<String, Object> args = env.getArguments();

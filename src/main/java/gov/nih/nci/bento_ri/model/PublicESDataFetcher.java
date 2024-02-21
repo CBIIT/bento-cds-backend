@@ -17,6 +17,7 @@ import static graphql.schema.idl.TypeRuntimeWiring.newTypeWiring;
 @Component
 public class PublicESDataFetcher extends AbstractPublicESDataFetcher {
     private static final Logger logger = LogManager.getLogger(PublicESDataFetcher.class);
+    private static final String SCHEMA_VERSION = "1.2.0";
     private final YamlQueryFactory yamlQueryFactory;
 
     public PublicESDataFetcher(ESService esService) {
@@ -28,7 +29,7 @@ public class PublicESDataFetcher extends AbstractPublicESDataFetcher {
     public RuntimeWiring buildRuntimeWiring() throws IOException {
         return RuntimeWiring.newRuntimeWiring()
                 .type(newTypeWiring("QueryType")
-                        .dataFetcher("ping", env -> "pong")
+                        .dataFetcher("schemaVersion", env -> SCHEMA_VERSION)
                 )
                 .build();
     }
