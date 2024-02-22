@@ -28,6 +28,10 @@ type File {
   md5sum: String
   file_url_in_cds: String
   experimental_strategy_and_data_subtypes: String
+  study: Study
+  # TODO [Genomic_Info] is single on prod
+  genomic_info: [Genomic_Info]
+  samples: [Sample]
 }
 
 type Study {
@@ -81,7 +85,7 @@ type Treatment {
 
 type Specimen {
   specimen_id: String
-  participant_id: participant_id
+  participant_id: String
 }
 
 type Genomic_Info {
@@ -432,7 +436,7 @@ type QueryType {
 		size_of_data_being_uploaded_original_unit: String,
 		acl: String,
 		study_access: String
-    ): [study]
+    ): [Study]
 
     specimen (
         first: Int = 2500,

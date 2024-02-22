@@ -18,6 +18,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.opensearch.action.search.SearchRequest;
 import org.opensearch.client.Request;
+import org.opensearch.search.builder.SearchSourceBuilder;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -110,6 +111,86 @@ public class PrivateESDataFetcher extends AbstractPrivateESDataFetcher {
                         .dataFetcher("findSubjectIdsInList", env -> {
                             Map<String, Object> args = env.getArguments();
                             return findSubjectIdsInList(args);
+                        })
+                )
+                .type(newTypeWiring("File") // Crucial for resolving fields within a file
+                        .dataFetcher("study", env -> {
+                            Map<String, Object> aFile = env.getSource();
+                            QueryParam queryParam = QueryParam.builder()
+                                    .args(env.getArguments())
+                                    .outputType(env.getFieldType())
+                                    .build();
+
+                            Map<String, Object> args = new HashMap<>();
+                            if (aFile.containsKey("file_id")) {
+                                args.put("file_id", aFile.get("file_id"));
+                            }
+
+                            SearchSourceBuilder filterType = new DefaultFilter(FilterParam.builder()
+                                    .args(args)
+                                    .returnFields(queryParam.getReturnTypes())
+                                    .build()).getSourceFilter();
+
+                            Map<String, HashMap> multipleSendResult = esService.elasticMultiSend(
+                                    List.of(MultipleRequests.builder()
+                                            .name("TEST")
+                                            .request(new SearchRequest()
+                                                    .indices("studies")
+                                                    .source(filterType))
+                                            .typeMapper(typeMapper.getMap(queryParam.getReturnTypes())).build()));
+                            return multipleSendResult.get("TEST");
+                        })
+                        .dataFetcher("genomic_info", env -> {
+                            Map<String, Object> aFile = env.getSource();
+                            QueryParam queryParam = QueryParam.builder()
+                                    .args(env.getArguments())
+                                    .outputType(env.getFieldType())
+                                    .build();
+
+                            Map<String, Object> args = new HashMap<>();
+                            if (aFile.containsKey("file_id")) {
+                                args.put("file_id", aFile.get("file_id"));
+                            }
+
+                            SearchSourceBuilder filterType = new DefaultFilter(FilterParam.builder()
+                                    .args(args)
+                                    .returnFields(queryParam.getReturnTypes())
+                                    .build()).getSourceFilter();
+
+                            Map<String, List<Map<String, Object>>> multipleSendResult = esService.elasticMultiSend(
+                                    List.of(MultipleRequests.builder()
+                                            .name("TEST")
+                                            .request(new SearchRequest()
+                                                    .indices("genomic_info")
+                                                    .source(filterType))
+                                            .typeMapper(typeMapper.getList(queryParam.getReturnTypes())).build()));
+                            return multipleSendResult.get("TEST");
+                        })
+                        .dataFetcher("samples", env -> {
+                            Map<String, Object> aFile = env.getSource();
+                            QueryParam queryParam = QueryParam.builder()
+                                    .args(env.getArguments())
+                                    .outputType(env.getFieldType())
+                                    .build();
+
+                            Map<String, Object> args = new HashMap<>();
+                            if (aFile.containsKey("file_id")) {
+                                args.put("files", aFile.get("file_id"));
+                            }
+
+                            SearchSourceBuilder filterType = new DefaultFilter(FilterParam.builder()
+                                    .args(args)
+                                    .returnFields(queryParam.getReturnTypes())
+                                    .build()).getSourceFilter();
+
+                            Map<String, List<Map<String, Object>>> multipleSendResult = esService.elasticMultiSend(
+                                    List.of(MultipleRequests.builder()
+                                            .name("TEST")
+                                            .request(new SearchRequest()
+                                                    .indices("samples")
+                                                    .source(filterType))
+                                            .typeMapper(typeMapper.getList(queryParam.getReturnTypes())).build()));
+                            return multipleSendResult.get("TEST");
                         })
                 )
                 .build();

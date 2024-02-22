@@ -770,9 +770,9 @@ Indices:
       library_id:
         type: keyword
       bases:
-        type: long
+        type: float
       number_of_reads:
-        type: long
+        type: float
       avg_read_length:
         type: float
       coverage:
@@ -787,6 +787,8 @@ Indices:
         type: keyword
       library_layout:
         type: keyword
+      library_source:
+        type: keyword
       library_selection:
         type: keyword
       platform:
@@ -799,26 +801,26 @@ Indices:
         type: keyword
     # Cypher query will be used to retrieve data from Neo4j, and index into Elasticsearch
     cypher_query: "
-      MATCH (g:genomic_info)
-      OPTIONAL MATCH (g)-->(f:file)
+      MATCH (n:genomic_info)
+      OPTIONAL MATCH (n)-->(f:file)
       RETURN
-        g.library_id AS library_id,
-        g.bases AS bases,
-        g.number_of_reads AS number_of_reads,
-        g.avg_read_length AS avg_read_length,
-        g.coverage AS coverage,
-        g.reference_genome_assembly AS reference_genome_assembly,
-        g.custom_assembly_fasta_file_for_alignment AS custom_assembly_fasta_file_for_alignment,
-        g.design_description AS design_description,
-        g.library_strategy AS library_strategy,
-        g.library_layout AS library_layout,
-        g.library_source AS library_source,
-        g.library_selection AS library_selection,
-        g.platform AS platform,
-        g.instrument_model AS instrument_model,
-        g.sequence_alignment_software AS sequence_alignment_software,
-        f.file_id AS file_id
-    "
+        n.library_id AS library_id,
+        n.bases AS bases,
+        n.number_of_reads AS number_of_reads,
+        n.avg_read_length AS avg_read_length,
+        n.coverage AS coverage,
+        n.reference_genome_assembly AS reference_genome_assembly,
+        n.custom_assembly_fasta_file_for_alignment AS custom_assembly_fasta_file_for_alignment,
+        n.design_description AS design_description,
+        n.library_strategy AS library_strategy,
+        n.library_layout AS library_layout,
+        n.library_source AS library_source,
+        n.library_selection AS library_selection,
+        n.platform AS platform,
+        n.instrument_model AS instrument_model,
+        n.sequence_alignment_software AS sequence_alignment_software,
+        COLLECT(DISTINCT f.file_id) as file_id
+      "
 
   - index_name: diagnosis
     type: neo4j
@@ -1015,10 +1017,13 @@ Indices:
         type: keyword
       program_acronym:
         type: keyword
+      file_id:
+        type: keyword
 
     # Cypher query will be used to retrieve data from Neo4j, and index into Elasticsearch
     cypher_query: "
-      MATCH (s:study)
+      MATCH (s:study)      
+      OPTIONAL MATCH (s)<--(f:file)
       WITH s, {
         study_code: s.study_name,
         study_code_gs: s.study_name,
@@ -1061,7 +1066,8 @@ Indices:
         size_of_data_being_uploaded_original: s.size_of_data_being_uploaded_original,
         size_of_data_being_uploaded_original_unit: s.size_of_data_being_uploaded_original_unit,
         acl: s.acl,
-        study_access: s.study_access
+        study_access: s.study_access,
+        file_id: COLLECT(DISTINCT f.file_id)
       } AS opensearch_data
       OPTIONAL MATCH (s)<--(p:participant)
       OPTIONAL MATCH (s)-->(pro:program)
