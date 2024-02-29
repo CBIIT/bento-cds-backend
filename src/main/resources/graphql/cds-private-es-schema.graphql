@@ -16,7 +16,7 @@ type Diagnosis {
   days_to_last_followup: Int
   last_known_disease_status: String
   days_to_last_known_status: Int
-  participant_id: String
+  participant: Participant
 }
 
 type File {
@@ -29,7 +29,6 @@ type File {
   file_url_in_cds: String
   experimental_strategy_and_data_subtypes: String
   study: Study
-  # TODO [Genomic_Info] is single on prod
   genomic_info: [Genomic_Info]
   samples: [Sample]
 }
@@ -113,7 +112,10 @@ type Participant {
   gender: String
   ethnicity: String
   dbGaP_subject_id: String
-  study_id: String
+  study: Study
+  diagnoses: [Diagnosis]
+  specimens: [Specimens]
+  samples: [Sample]
 }
 
 type Sample {
