@@ -44,3 +44,11 @@ queries:
     result:
       type: int
       method: count_bucket_keys
+  - name: file
+    index:
+      - files
+    filter:
+      type: pagination
+      defaultSortField: file_id
+    result:
+      type: object_array
