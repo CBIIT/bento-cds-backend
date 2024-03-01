@@ -44,6 +44,22 @@ queries:
     result:
       type: int
       method: count_bucket_keys
+  - name: diagnosis
+    index:
+      - diagnosis
+    filter:
+      type: pagination
+      defaultSortField: diagnosis_id
+    result:
+      type: object_array
+  - name: participant
+    index:
+      - participant
+    filter:
+      type: pagination
+      defaultSortField: participant_id
+    result:
+      type: object_array
   - name: file
     index:
       - files
