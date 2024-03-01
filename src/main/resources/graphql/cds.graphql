@@ -238,29 +238,6 @@ schema {
 }
 
 type QueryType {
-
-    diagnosis(
-        first: Int = 2500,
-        offset: Int = 0,
-        diagnosis_id: String,
-        disease_type: String,
-        vital_status: String,
-        primary_diagnosis: String,
-        primary_site: String,
-        age_at_diagnosis: Int,
-        tumor_grade: String,
-        tumor_stage_clinical_m: String,
-        tumor_stage_clinical_n: String,
-        tumor_stage_clinical_t: String,
-        morphology: String,
-        incidence_type: String,
-        progression_or_recurrence: String,
-        days_to_recurrence: Int,
-        days_to_last_followup: Int,
-        last_known_disease_status: String,
-        days_to_last_known_status: Int
-    ): [diagnosis]
-
     genomic_info (
         first: Int = 2500,
         offset: Int = 0,
@@ -280,16 +257,6 @@ type QueryType {
 		instrument_model: String,
 		sequence_alignment_software: String
     ): [genomic_info]
-
-    participant (
-        first: Int = 2500,
-        offset: Int = 0,
-		participant_id: String,
-		race: String,
-		gender: String,
-		ethnicity: String,
-		dbGaP_subject_id: String
-    ): [participant]
 
     program (
         first: Int = 2500,

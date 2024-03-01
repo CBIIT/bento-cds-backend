@@ -875,15 +875,323 @@ Indices:
     mapping:
       diagnosis_id:
         type: keyword
+      disease_type:
+        type: keyword
+      vital_status:
+        type: keyword
+      primary_diagnosis:
+        type: keyword
+      primary_site:
+        type: keyword
       site:
         type: keyword
+      age_at_diagnosis:
+        type: keyword
+      tumor_grade:
+        type: keyword
+      tumor_stage_clinical_m:
+        type: keyword
+      tumor_stage_clinical_n:
+        type: keyword
+      tumor_stage_clinical_t:
+        type: keyword
+      morphology:
+        type: keyword
+      incidence_type:
+        type: keyword
+      progression_or_recurrence:
+        type: keyword
+      days_to_recurrence:
+        type: keyword
+      days_to_last_followup:
+        type: keyword
+      last_known_disease_status:
+        type: keyword
+      days_to_last_known_status:
+        type: keyword
+      participant:
+        type: nested
+        properties:
+          participant_id:
+            type: keyword
+          race:
+            type: keyword
+          gender:
+            type: keyword
+          ethnicity:
+            type: keyword
+          dbGaP_subject_id:
+            type: keyword
+
     # Cypher query will be used to retrieve data from Neo4j, and index into Elasticsearch
     cypher_query: "
       MATCH (n:diagnosis)
+      OPTIONAL MATCH (n)-->(p:participant)
       RETURN
         n.diagnosis_id AS diagnosis_id,
-        n.primary_site AS site
+        n.disease_type AS disease_type,
+        n.vital_status AS vital_status,
+        n.primary_diagnosis AS primary_diagnosis,
+        n.primary_site AS primary_site,
+        n.primary_site AS site,
+        n.age_at_diagnosis AS age_at_diagnosis,
+        n.tumor_grade AS tumor_grade,
+        n.tumor_stage_clinical_m AS tumor_stage_clinical_m,
+        n.tumor_stage_clinical_n AS tumor_stage_clinical_n,
+        n.tumor_stage_clinical_t AS tumor_stage_clinical_t,
+        n.morphology AS morphology,
+        n.incidence_type AS incidence_type,
+        n.progression_or_recurrence AS progression_or_recurrence,
+        n.days_to_recurrence AS days_to_recurrence,
+        n.days_to_last_followup AS days_to_last_followup,
+        n.last_known_disease_status AS last_known_disease_status,
+        n.days_to_last_known_status AS days_to_last_known_status,
+        CASE WHEN p IS NOT NULL THEN {
+          participant_id: p.participant_id,
+          race: p.race,
+          gender: p.gender,
+          ethnicity: p.ethnicity,
+          dbGaP_subject_id: p.dbGaP_subject_id
+        } ELSE NULL END AS participant
       "
+
+  - index_name: participant
+    type: neo4j
+    # type mapping for each property of the index
+    mapping:
+      participant_id:
+        type: keyword
+      race:
+        type: keyword
+      gender:
+        type: keyword
+      ethnicity:
+        type: keyword
+      dbGaP_subject_id:
+        type: keyword
+      study:
+        type: nested
+        properties:
+          study_name:
+            type: keyword
+          study_acronym:
+            type: keyword
+          study_description:
+            type: keyword
+          short_description:
+            type: keyword
+          study_external_url:
+            type: keyword
+          primary_investigator_name:
+            type: keyword
+          primary_investigator_email:
+            type: keyword
+          co_investigator_name:
+            type: keyword
+          co_investigator_email:
+            type: keyword
+          phs_accession:
+            type: keyword
+          bioproject_accession:
+            type: keyword
+          index_date:
+            type: keyword
+          cds_requestor:
+            type: keyword
+          funding_agency:
+            type: keyword
+          funding_source_program_name:
+            type: keyword
+          grant_id:
+            type: keyword
+          clinical_trial_system:
+            type: keyword
+          clinical_trial_identifier:
+            type: keyword
+          clinical_trial_arm:
+            type: keyword
+          organism_species:
+            type: keyword
+          adult_or_childhood_study:
+            type: keyword
+          data_types:
+            type: keyword
+          file_types:
+            type: keyword
+          data_access_level:
+            type: keyword
+          cds_primary_bucket:
+            type: keyword
+          cds_secondary_bucket:
+            type: keyword
+          cds_tertiary_bucket:
+            type: keyword
+          number_of_participants:
+            type: keyword
+          number_of_samples:
+            type: float
+          file_types_and_format:
+            type: keyword
+          size_of_data_being_uploaded:
+            type: float
+          size_of_data_being_uploaded_unit:
+            type: keyword
+          size_of_data_being_uploaded_original:
+            type: float
+          size_of_data_being_uploaded_original_unit:
+            type: keyword
+          acl:
+            type: keyword
+          study_access:
+            type: keyword
+      diagnoses:
+        type: nested
+        properties:
+          diagnosis_id:
+            type: keyword
+          disease_type:
+            type: keyword
+          vital_status:
+            type: keyword
+          primary_diagnosis:
+            type: keyword
+          primary_site:
+            type: keyword
+          site:
+            type: keyword
+          age_at_diagnosis:
+            type: keyword
+          tumor_grade:
+            type: keyword
+          tumor_stage_clinical_m:
+            type: keyword
+          tumor_stage_clinical_n:
+            type: keyword
+          tumor_stage_clinical_t:
+            type: keyword
+          morphology:
+            type: keyword
+          incidence_type:
+            type: keyword
+          progression_or_recurrence:
+            type: keyword
+          days_to_recurrence:
+            type: keyword
+          days_to_last_followup:
+            type: keyword
+          last_known_disease_status:
+            type: keyword
+          days_to_last_known_status:
+            type: keyword
+      specimens:
+        type: nested
+        properties:
+          specimen_id:
+            type: keyword
+      samples:
+        type: nested
+        properties:
+          sample_id:
+            type: keyword
+          sample_type:
+            type: keyword
+          sample_tumor_status:
+            type: keyword
+          sample_anatomic_site:
+            type: keyword
+          sample_age_at_collection:
+            type: integer
+          derived_from_specimen:
+            type: keyword
+          biosample_accession:
+            type: keyword
+    #    # Cypher query will be used to retrieve data from Neo4j, and index into Elasticsearch
+    cypher_query: "
+      MATCH (p:participant)
+      OPTIONAL MATCH (p)-->(s:study)
+      OPTIONAL MATCH (p)<--(d:diagnosis)
+      OPTIONAL MATCH (p)<--(spec:specimen)
+      OPTIONAL MATCH (p)<--(samp:sample)
+      RETURN
+        p.participant_id as participant_id,
+        p.race as race,
+        p.gender as gender,
+        p.ethnicity as ethnicity,
+        p.dbGaP_subject_id as dbGaP_subject_id,
+        CASE WHEN s IS NOT NULL THEN {
+          study_name: s.study_name,
+          study_acronym: s.study_acronym,
+          study_description: s.study_description,
+          short_description: s.short_description,
+          study_external_url: s.study_external_url,
+          primary_investigator_name: s.primary_investigator_name,
+          primary_investigator_email: s.primary_investigator_email,
+          co_investigator_name: s.co_investigator_name,
+          co_investigator_email: s.co_investigator_email,
+          phs_accession: s.phs_accession,
+          bioproject_accession: s.bioproject_accession,
+          index_date: s.index_date,
+          cds_requestor: s.cds_requestor,
+          funding_agency: s.funding_agency,
+          funding_source_program_name: s.funding_source_program_name,
+          grant_id: s.grant_id,
+          clinical_trial_system: s.clinical_trial_system,
+          clinical_trial_identifier: s.clinical_trial_identifier,
+          clinical_trial_arm: s.clinical_trial_arm,
+          organism_species: s.organism_species,
+          adult_or_childhood_study: s.adult_or_childhood_study,
+          data_types: s.data_types,
+          file_types: s.file_types,
+          data_access_level: s.data_access_level,
+          cds_primary_bucket: s.cds_primary_bucket,
+          cds_secondary_bucket: s.cds_secondary_bucket,
+          cds_tertiary_bucket: s.cds_tertiary_bucket,
+          number_of_participants: s.number_of_participants,
+          number_of_samples: s.number_of_samples,
+          study_data_types: s.study_data_types,
+          file_types_and_format: s.file_types_and_format,
+          size_of_data_being_uploaded: s.size_of_data_being_uploaded,
+          size_of_data_being_uploaded_unit: s.size_of_data_being_uploaded_unit,
+          size_of_data_being_uploaded_original: s.size_of_data_being_uploaded_original,
+          size_of_data_being_uploaded_original_unit: s.size_of_data_being_uploaded_original_unit,
+          acl: s.acl,
+          study_access: s.study_access
+        } ELSE NULL END AS study,
+        CASE WHEN d IS NOT NULL THEN COLLECT(DISTINCT {
+          diagnosis_id: d.diagnosis_id,
+          disease_type: d.disease_type,
+          vital_status: d.vital_status,
+          primary_diagnosis: d.primary_diagnosis,
+          primary_site: d.primary_site,
+          site: d.site,
+          age_at_diagnosis: d.age_at_diagnosis,
+          tumor_grade: d.tumor_grade,
+          tumor_stage_clinical_m: d.tumor_stage_clinical_m,
+          tumor_stage_clinical_n: d.tumor_stage_clinical_n,
+          tumor_stage_clinical_t: d.tumor_stage_clinical_t,
+          morphology: d.morphology,
+          incidence_type: d.incidence_type,
+          progression_or_recurrence: d.progression_or_recurrence,
+          days_to_recurrence: d.days_to_recurrence,
+          days_to_last_followup: d.days_to_last_followup,
+          last_known_disease_status: d.last_known_disease_status,
+          days_to_last_known_status: d.days_to_last_known_status
+        }) ELSE NULL END AS diagnoses,
+        CASE WHEN spec IS NOT NULL THEN COLLECT(DISTINCT {
+          specimen_id: spec.specimen_id
+        }) ELSE NULL END AS specimens,
+        CASE WHEN samp IS NOT NULL THEN COLLECT(DISTINCT {
+          sample_id: samp.sample_id,
+          sample_type: samp.sample_type,
+          sample_tumor_status: samp.sample_tumor_status,
+          sample_anatomic_site: samp.sample_anatomic_site,
+          sample_age_at_collection: samp.sample_age_at_collection,
+          derived_from_specimen: samp.derived_from_specimen,
+          biosample_accession: samp.biosample_accession
+        }) ELSE NULL END AS samples
+    "
+
+
 # Subject IDs index
   - index_name: subject_ids
     type: neo4j
