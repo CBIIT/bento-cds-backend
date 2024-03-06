@@ -145,6 +145,18 @@ Indices:
         type: keyword
       file_types:
         type: keyword
+      sample_type:
+        type: keyword
+      sample_tumor_status:
+        type: keyword
+      sample_anatomic_site:
+        type: keyword
+      sample_age_at_collection:
+        type: integer
+      derived_from_specimen:
+        type: keyword
+      biosample_accession:
+        type: keyword
       genders:
         type: keyword
       instrument_models:
@@ -187,15 +199,82 @@ Indices:
       # Overview properties
       analyte_type:
         type: keyword
-      files:
-        type: keyword
       sample_id:
         type: keyword
       sample_ids:
         type: keyword
       subject_ids:
         type: keyword
-
+      participant:
+        type: nested
+        properties:
+          participant_id:
+            type: keyword
+          race:
+            type: keyword
+          gender:
+            type: keyword
+          ethnicity:
+            type: keyword
+          dbGaP_subject_id:
+            type: keyword
+      specimen:
+        type: nested
+        properties:
+          specimen_id:
+            type: keyword
+      files:
+        type: nested
+        properties:
+          file_id:
+            type: keyword
+          file_name:
+            type: keyword
+          file_type:
+            type: keyword
+          file_description:
+            type: long
+          file_size:
+            type: long
+          md5sum:
+            type: keyword
+          file_url_in_cds:
+            type: keyword
+          experimental_strategy_and_data_subtypes:
+            type: keyword
+      genomic_info:
+        type: nested
+        properties:
+          library_id:
+            type: keyword
+          bases:
+            type: float
+          number_of_reads:
+            type: float
+          avg_read_length:
+            type: float
+          coverage:
+            type: float
+          reference_genome_assembly:
+            type: keyword
+          custom_assembly_fasta_file_for_alignment:
+            type: keyword
+          design_description:
+            type: keyword
+          library_strategy:
+            type: keyword
+          library_layout:
+            type: keyword
+          library_source:
+            type: keyword
+          library_selection:
+            type: keyword
+          platform:
+            type: keyword
+          instrument_model:
+            type: keyword
+          sequence_alignment_software:
+            type: keyword
     # Cypher query will be used to retrieve data from Neo4j, and index into Elasticsearch
     cypher_query: "
       MATCH (s:study)<--(p:participant)
@@ -230,17 +309,37 @@ Indices:
           sample_id_gs: opensearch_data.sample_id
         }) AS opensearch_data
       OPTIONAL MATCH (samp)-->(p:participant)
-      WITH samp, na, 
+      OPTIONAL MATCH (samp)-->(spec:specimen)
+      WITH samp, na,
         apoc.map.merge(opensearch_data, {
           genders: p.gender,
-          subject_ids: p.participant_id
+          subject_ids: p.participant_id,
+          participant: CASE WHEN p IS NOT NULL THEN {
+            participant_id: p.participant_id,
+            race: p.race,
+            gender: p.gender,
+            ethnicity: p.ethnicity,
+            dbGaP_subject_id: p.dbGaP_subject_id
+            } ELSE NULL END,
+          specimen: CASE WHEN spec IS NOT NULL THEN {
+            specimen_id: spec.specimen_id
+            } ELSE NULL END
         }) AS opensearch_data
       OPTIONAL MATCH (samp)<--(f:file)
       WITH samp, na, 
         apoc.map.merge(opensearch_data, {
           experimental_strategies: apoc.coll.sort(apoc.coll.toSet(apoc.coll.flatten(COLLECT (apoc.text.split(f.experimental_strategy_and_data_subtypes,\"[;,]\\s{0,1}\")), true))),
           file_types: apoc.coll.sort(COLLECT(DISTINCT COALESCE(f.file_type, na))),
-          files: apoc.coll.sort(COLLECT(DISTINCT COALESCE(f.file_id, na)))
+          files: CASE WHEN f IS NOT NULL THEN COLLECT(DISTINCT {
+            file_id: f.file_id,
+            file_name: f.file_name,
+            file_type: f.file_type,
+            file_description: f.file_description,
+            file_size: f.file_size,
+            md5sum: f.md5sum,
+            file_url_in_cds: f.file_url_in_cds,
+            experimental_strategy_and_data_subtypes: f.experimental_strategy_and_data_subtypes
+          }) ELSE NULL END
         }) AS opensearch_data
       OPTIONAL MATCH (samp)<--(:file)<--(g:genomic_info)
       WITH samp, na, 
@@ -251,7 +350,25 @@ Indices:
           library_strategies: apoc.coll.sort(COLLECT(DISTINCT COALESCE(g.library_strategy, na))),
           instrument_models: apoc.coll.sort(COLLECT(DISTINCT COALESCE(g.instrument_model, na))),
           platforms: apoc.coll.sort(COLLECT(DISTINCT COALESCE(g.platform, na))),
-          reference_genome_assemblies: apoc.coll.sort(COLLECT(DISTINCT COALESCE(g.reference_genome_assembly, na)))
+          reference_genome_assemblies: apoc.coll.sort(COLLECT(DISTINCT COALESCE(g.reference_genome_assembly, na))),
+          genomic_info: CASE WHEN g IS NOT NULL THEN COLLECT(DISTINCT {
+            library_id: g.library_id,
+            sample_type: g.sample_type,
+            bases: g.bases,
+            number_of_reads: g.number_of_reads,
+            avg_read_length: g.avg_read_length,
+            coverage: g.coverage,
+            reference_genome_assembly: g.reference_genome_assembly,
+            custom_assembly_fasta_file_for_alignment: g.custom_assembly_fasta_file_for_alignment,
+            design_description: g.design_description,
+            library_strategy: g.library_strategy,
+            library_layout: g.library_layout,
+            library_source: g.library_source,
+            library_selection: g.library_selection,
+            platform: g.platform,
+            instrument_model: g.instrument_model,
+            sequence_alignment_software: g.sequence_alignment_software
+          }) ELSE NULL END
         }) AS opensearch_data
       OPTIONAL MATCH (samp)-->(:participant)<--(diag:diagnosis)
       WITH samp, na, 
@@ -788,12 +905,183 @@ Indices:
       RETURN opensearch_data
       ORDER BY opensearch_data.files
     "
+
+  - index_name: treatment
+    type: neo4j
+    # type mapping for each property of the index
+    mapping:
+      treatment_id:
+        type: keyword
+      treatment_type:
+        type: keyword
+      treatment_outcome:
+        type: keyword
+      days_to_treatment:
+        type: keyword
+      therapeutic_agents:
+        type: keyword
+    # Cypher query will be used to retrieve data from Neo4j, and index into Elasticsearch
+    cypher_query: "
+      MATCH (t:treatment)
+      RETURN
+        t.treatment_id AS treatment_id,
+        t.treatment_type AS treatment_type,
+        t.treatment_outcome AS treatment_outcome,
+        t.days_to_treatment AS days_to_treatment,
+        t.therapeutic_agents AS therapeutic_agents
+    "
+
+  - index_name: genomic_info
+    type: neo4j
+    # type mapping for each property of the index
+    mapping:
+      library_id:
+        type: keyword
+      bases:
+        type: float
+      number_of_reads:
+        type: float
+      avg_read_length:
+        type: float
+      coverage:
+        type: float
+      reference_genome_assembly:
+        type: keyword
+      custom_assembly_fasta_file_for_alignment:
+        type: keyword
+      design_description:
+        type: keyword
+      library_strategy:
+        type: keyword
+      library_layout:
+        type: keyword
+      library_source:
+        type: keyword
+      library_selection:
+        type: keyword
+      platform:
+        type: keyword
+      instrument_model:
+        type: keyword
+      sequence_alignment_software:
+        type: keyword
+      files:
+        type: nested
+        properties:
+          file_id:
+            type: keyword
+          file_name:
+            type: keyword
+          file_type:
+            type: keyword
+          file_description:
+            type: keyword
+          file_size:
+            type: keyword
+          md5sum:
+            type: keyword
+          file_url_in_cds:
+            type: keyword
+          experimental_strategy_and_data_subtypes:
+            type: keyword
+      samples:
+        type: nested
+        properties:
+          sample_id:
+            type: keyword
+          sample_type:
+            type: keyword
+          sample_tumor_status:
+            type: keyword
+          sample_anatomic_site:
+            type: keyword
+          sample_age_at_collection:
+            type: integer
+          derived_from_specimen:
+            type: keyword
+          biosample_accession:
+            type: keyword
+      file:
+        type: nested
+        properties:
+          file_id:
+            type: keyword
+          file_name:
+            type: keyword
+          file_type:
+            type: keyword
+          file_description:
+            type: keyword
+          file_size:
+            type: keyword
+          md5sum:
+            type: keyword
+          file_url_in_cds:
+            type: keyword
+          experimental_strategy_and_data_subtypes:
+            type: keyword
+
+    # Cypher query will be used to retrieve data from Neo4j, and index into Elasticsearch
+    cypher_query: "
+      MATCH (n:genomic_info)
+      OPTIONAL MATCH (n)-[:of_file]-(f:file)
+      OPTIONAL MATCH (n)-[:from_genomic_info]-(gf:file)
+      OPTIONAL MATCH (n)<--(samp:sample)
+      RETURN
+        n.library_id AS library_id,
+        n.bases AS bases,
+        n.number_of_reads AS number_of_reads,
+        n.avg_read_length AS avg_read_length,
+        n.coverage AS coverage,
+        n.reference_genome_assembly AS reference_genome_assembly,
+        n.custom_assembly_fasta_file_for_alignment AS custom_assembly_fasta_file_for_alignment,
+        n.design_description AS design_description,
+        n.library_strategy AS library_strategy,
+        n.library_layout AS library_layout,
+        n.library_source AS library_source,
+        n.library_selection AS library_selection,
+        n.platform AS platform,
+        n.instrument_model AS instrument_model,
+        n.sequence_alignment_software AS sequence_alignment_software,
+        CASE WHEN gf IS NOT NULL THEN COLLECT(DISTINCT {
+            file_id: gf.file_id,
+            file_name: gf.file_name,
+            file_type: gf.file_type,
+            file_description: gf.file_description,
+            file_size: gf.file_size,
+            md5sum: gf.md5sum,
+            file_url_in_cds: gf.file_url_in_cds,
+            experimental_strategy_and_data_subtypes: gf.experimental_strategy_and_data_subtypes
+        }) ELSE NULL END as files,
+        CASE WHEN samp IS NOT NULL THEN COLLECT(DISTINCT {
+          sample_id: samp.sample_id,
+          sample_type: samp.sample_type,
+          sample_tumor_status: samp.sample_tumor_status,
+          sample_anatomic_site: samp.sample_anatomic_site,
+          sample_age_at_collection: samp.sample_age_at_collection,
+          derived_from_specimen: samp.derived_from_specimen,
+          biosample_accession: samp.biosample_accession
+        }) ELSE NULL END AS samples,
+        CASE WHEN f IS NOT NULL THEN COLLECT(DISTINCT {
+            file_id: f.file_id,
+            file_name: f.file_name,
+            file_type: f.file_type,
+            file_description: f.file_description,
+            file_size: f.file_size,
+            md5sum: f.md5sum,
+            file_url_in_cds: f.file_url_in_cds,
+            experimental_strategy_and_data_subtypes: f.experimental_strategy_and_data_subtypes
+        }) ELSE NULL END as file
+      "
+
 # Programs index
   - index_name: programs
     type: neo4j
     # type mapping for each property of the index
     mapping:
       program_name:
+        type: search_as_you_type
+      program_acronym:
         type: search_as_you_type
       program_short_description:
         type: search_as_you_type
@@ -805,6 +1093,82 @@ Indices:
         type: search_as_you_type
       program_sort_order_kw:
         type: keyword
+      studies:
+        type: nested
+        properties:
+          study_name:
+            type: keyword
+          study_acronym:
+            type: keyword
+          study_description:
+            type: keyword
+          short_description:
+            type: keyword
+          study_external_url:
+            type: keyword
+          primary_investigator_name:
+            type: keyword
+          primary_investigator_email:
+            type: keyword
+          co_investigator_name:
+            type: keyword
+          co_investigator_email:
+            type: keyword
+          phs_accession:
+            type: keyword
+          bioproject_accession:
+            type: keyword
+          index_date:
+            type: keyword
+          cds_requestor:
+            type: keyword
+          funding_agency:
+            type: keyword
+          funding_source_program_name:
+            type: keyword
+          grant_id:
+            type: keyword
+          clinical_trial_system:
+            type: keyword
+          clinical_trial_identifier:
+            type: keyword
+          clinical_trial_arm:
+            type: keyword
+          organism_species:
+            type: keyword
+          adult_or_childhood_study:
+            type: keyword
+          data_types:
+            type: keyword
+          file_types:
+            type: keyword
+          data_access_level:
+            type: keyword
+          cds_primary_bucket:
+            type: keyword
+          cds_secondary_bucket:
+            type: keyword
+          cds_tertiary_bucket:
+            type: keyword
+          number_of_participants:
+            type: keyword
+          number_of_samples:
+            type: float
+          file_types_and_format:
+            type: keyword
+          size_of_data_being_uploaded:
+            type: float
+          size_of_data_being_uploaded_unit:
+            type: keyword
+          size_of_data_being_uploaded_original:
+            type: float
+          size_of_data_being_uploaded_original_unit:
+            type: keyword
+          acl:
+            type: keyword
+          study_access:
+            type: keyword
+
     # Cypher query will be used to retrieve data from Neo4j, and index into Elasticsearch
     cypher_query: "
       MATCH (p:program)
@@ -825,11 +1189,7 @@ Indices:
     mapping:
       study_code:
         type: keyword
-      phs_accession:
-        type: keyword
       study_data_types:
-        type: keyword
-      acl:
         type: keyword
       study_code_gs:
         type: search_as_you_type
@@ -839,11 +1199,132 @@ Indices:
         type: search_as_you_type
       study_data_types_gs:
         type: search_as_you_type
-
+      study_name:
+        type: keyword
+      study_acronym:
+        type: keyword
+      study_description:
+        type: keyword
+      short_description:
+        type: keyword
+      study_external_url:
+        type: keyword
+      primary_investigator_name:
+        type: keyword
+      primary_investigator_email:
+        type: keyword
+      co_investigator_name:
+        type: keyword
+      co_investigator_email:
+        type: keyword
+      phs_accession:
+        type: keyword
+      bioproject_accession:
+        type: keyword
+      index_date:
+        type: keyword
+      cds_requestor:
+        type: keyword
+      funding_agency:
+        type: keyword
+      funding_source_program_name:
+        type: keyword
+      grant_id:
+        type: keyword
+      clinical_trial_system:
+        type: keyword
+      clinical_trial_identifier:
+        type: keyword
+      clinical_trial_arm:
+        type: keyword
+      organism_species:
+        type: keyword
+      adult_or_childhood_study:
+        type: keyword
+      data_types:
+        type: keyword
+      file_types:
+        type: keyword
+      data_access_level:
+        type: keyword
+      cds_primary_bucket:
+        type: keyword
+      cds_secondary_bucket:
+        type: keyword
+      cds_tertiary_bucket:
+        type: keyword
+      number_of_participants:
+        type: keyword
+      number_of_samples:
+        type: float
+      file_types_and_format:
+        type: keyword
+      size_of_data_being_uploaded:
+        type: float
+      size_of_data_being_uploaded_unit:
+        type: keyword
+      size_of_data_being_uploaded_original:
+        type: float
+      size_of_data_being_uploaded_original_unit:
+        type: keyword
+      acl:
+        type: keyword
+      study_access:
+        type: keyword
+      program:
+        type: nested
+        properties:
+          program_name:
+            type: search_as_you_type
+          program_acronym:
+            type: search_as_you_type
+          program_short_description:
+            type: search_as_you_type
+          program_full_description:
+            type: search_as_you_type
+          program_external_url:
+            type: search_as_you_type
+          program_sort_order:
+            type: search_as_you_type
+          program_sort_order_kw:
+            type: keyword
+      participants:
+        type: nested
+        properties:
+          participant_id:
+            type: keyword
+          race:
+            type: keyword
+          gender:
+            type: keyword
+          ethnicity:
+            type: keyword
+          dbGaP_subject_id:
+            type: keyword
+      files:
+        type: nested
+        properties:
+          file_id:
+            type: keyword
+          file_name:
+            type: keyword
+          file_type:
+            type: keyword
+          file_description:
+            type: keyword
+          file_size:
+            type: keyword
+          md5sum:
+            type: keyword
+          file_url_in_cds:
+            type: keyword
+          experimental_strategy_and_data_subtypes:
+            type: keyword
 
     # Cypher query will be used to retrieve data from Neo4j, and index into Elasticsearch
     cypher_query: "
       MATCH (s:study)
+      OPTIONAL MATCH (s)<--(f:file)
       WITH s, {
         study_code: s.study_name,
         study_code_gs: s.study_name,
@@ -853,20 +1334,139 @@ Indices:
         study_name_gs: s.study_name,
         study_data_types: s.study_data_types,
         study_data_types_gs: s.study_data_types,
-        acl: s.acl
+        short_description: s.short_description,
+        study_acronym: s.study_acronym,
+        study_description: s.study_description,
+        study_external_url: s.study_external_url,
+        primary_investigator_name: s.primary_investigator_name,
+        primary_investigator_email: s.primary_investigator_email,
+        co_investigator_name: s.co_investigator_name,
+        co_investigator_email: s.co_investigator_email,
+        bioproject_accession: s.bioproject_accession,
+        index_date: s.index_date,
+        cds_requestor: s.cds_requestor,
+        funding_agency: s.funding_agency,
+        funding_source_program_name: s.funding_source_program_name,
+        grant_id: s.grant_id,
+        clinical_trial_system: s.clinical_trial_system,
+        clinical_trial_identifier: s.clinical_trial_identifier,
+        clinical_trial_arm: s.clinical_trial_arm,
+        organism_species: s.organism_species,
+        adult_or_childhood_study: s.adult_or_childhood_study,
+        data_types: s.data_types,
+        file_types: s.file_types,
+        data_access_level: s.data_access_level,
+        cds_primary_bucket: s.cds_primary_bucket,
+        cds_secondary_bucket: s.cds_secondary_bucket,
+        cds_tertiary_bucket: s.cds_tertiary_bucket,
+        number_of_participants: s.number_of_participants,
+        number_of_samples: s.number_of_samples,
+        file_types_and_format: s.file_types_and_format,
+        size_of_data_being_uploaded: s.size_of_data_being_uploaded,
+        size_of_data_being_uploaded_unit: s.size_of_data_being_uploaded_unit,
+        size_of_data_being_uploaded_original: s.size_of_data_being_uploaded_original,
+        size_of_data_being_uploaded_original_unit: s.size_of_data_being_uploaded_original_unit,
+        acl: s.acl,
+        study_access: s.study_access,
+        files: CASE WHEN f IS NOT NULL THEN COLLECT(DISTINCT {
+            file_id: f.file_id,
+            file_name: f.file_name,
+            file_type: f.file_type,
+            file_description: f.file_description,
+            file_size: f.file_size,
+            md5sum: f.md5sum,
+            file_url_in_cds: f.file_url_in_cds,
+            experimental_strategy_and_data_subtypes: f.experimental_strategy_and_data_subtypes
+          }) ELSE NULL END
       } AS opensearch_data
       OPTIONAL MATCH (s)<--(p:participant)
-      WITH s, 
+      OPTIONAL MATCH (s)-->(pro:program)
+      WITH s,
         apoc.map.merge(opensearch_data, {
-          number_of_participants: COUNT(DISTINCT p)
+          number_of_participants: COUNT(DISTINCT p),
+          program: CASE WHEN pro IS NOT NULL THEN {
+            program_name: pro.program_name,
+            program_acronym: pro.program_acronym,
+            program_short_description: pro.program_short_description,
+            program_full_description: pro.program_full_description,
+            program_external_url: pro.program_external_url,
+            program_sort_order: pro.program_sort_order
+          } ELSE NULL END,
+          participants: CASE WHEN p IS NOT NULL THEN COLLECT(DISTINCT {
+            participant_id: p.participant_id,
+            race: p.race,
+            gender: p.gender,
+            ethnicity: p.ethnicity,
+            dbGaP_subject_id: p.dbGaP_subject_id
+          }) ELSE NULL END
         }) AS opensearch_data
       OPTIONAL MATCH (s)<--(:participant)<--(samp:sample)
-      WITH s, 
+      WITH s,
         apoc.map.merge(opensearch_data, {
           number_of_samples: COUNT(DISTINCT samp)
         }) AS opensearch_data
       RETURN opensearch_data
       ORDER BY opensearch_data.study_code
+    "
+  - index_name: specimen
+    type: neo4j
+    # type mapping for each property of the index
+    mapping:
+      specimen_id:
+        type: keyword
+      participant:
+        type: nested
+        properties:
+          participant_id:
+            type: keyword
+          race:
+            type: keyword
+          gender:
+            type: keyword
+          ethnicity:
+            type: keyword
+          dbGaP_subject_id:
+            type: keyword
+      samples:
+        type: nested
+        properties:
+          sample_id:
+            type: keyword
+          sample_type:
+            type: keyword
+          sample_tumor_status:
+            type: keyword
+          sample_anatomic_site:
+            type: keyword
+          sample_age_at_collection:
+            type: integer
+          derived_from_specimen:
+            type: keyword
+          biosample_accession:
+            type: keyword
+    # Cypher query will be used to retrieve data from Neo4j, and index into Elasticsearch
+    cypher_query: "
+      MATCH (s:specimen)
+      OPTIONAL MATCH (s)<--(samp:sample)
+      OPTIONAL MATCH (s)-->(p:participant)
+      RETURN
+        s.specimen_id AS specimen_id,
+        CASE WHEN p IS NOT NULL THEN {
+          participant_id: p.participant_id,
+          race: p.race,
+          gender: p.gender,
+          ethnicity: p.ethnicity,
+          dbGaP_subject_id: p.dbGaP_subject_id
+        } ELSE NULL END AS participant,
+        CASE WHEN samp IS NOT NULL THEN COLLECT(DISTINCT {
+          sample_id: samp.sample_id,
+          sample_type: samp.sample_type,
+          sample_tumor_status: samp.sample_tumor_status,
+          sample_anatomic_site: samp.sample_anatomic_site,
+          sample_age_at_collection: samp.sample_age_at_collection,
+          derived_from_specimen: samp.derived_from_specimen,
+          biosample_accession: samp.biosample_accession
+        }) ELSE NULL END
     "
 # diagnosis index
   - index_name: diagnosis

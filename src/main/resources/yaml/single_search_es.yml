@@ -68,3 +68,51 @@ queries:
       defaultSortField: file_id
     result:
       type: object_array
+  - name: study
+    index:
+      - studies
+    filter:
+      type: pagination
+      defaultSortField: phs_accession
+    result:
+      type: object_array
+  - name: sample
+    index:
+      - samples
+    filter:
+      type: pagination
+      defaultSortField: sample_id
+    result:
+      type: object_array
+  - name: genomic_info
+    index:
+      - genomic_info
+    filter:
+      type: pagination
+      defaultSortField: library_id
+    result:
+      type: object_array
+  - name: specimen
+    index:
+      - specimen
+    filter:
+      type: pagination
+      defaultSortField: specimen_id
+    result:
+      type: object_array
+  - name: treatment
+    index:
+      - treatment
+    filter:
+      type: pagination
+      defaultSortField: treatment_id
+    result:
+      type: object_array
+  - name: program
+    index:
+      - programs
+    filter:
+      type: pagination
+      defaultSortField: program_name
+    result:
+      type: object_array

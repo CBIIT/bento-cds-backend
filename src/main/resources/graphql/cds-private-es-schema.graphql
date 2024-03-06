@@ -139,6 +139,14 @@ type Specimen {
   samples: [Sample]
 }
 
+type Treatment {
+  treatment_id: String
+  treatment_type: String
+  treatment_outcome: String
+  days_to_treatment: Int
+  therapeutic_agents: String
+}
+
 type SubjectOverview {
     subject_id: String
     study_acronym: String
@@ -394,6 +402,106 @@ type QueryType {
         file_url_in_cds: String,
         experimental_strategy_and_data_subtypes: String
     ): [File]
+   genomic_info (
+        first: Int = 2500,
+        offset: Int = 0,
+		library_id: String,
+		bases: Int,
+		number_of_reads: Int,
+		avg_read_length: Float,
+		coverage: Float,
+		reference_genome_assembly: String,
+		custom_assembly_fasta_file_for_alignment: String,
+		design_description: String,
+		library_strategy: String,
+		library_layout: String,
+		library_source: String,
+		library_selection: String,
+		platform: String,
+		instrument_model: String,
+		sequence_alignment_software: String
+    ): [Genomic_Info]
+
+    program (
+        first: Int = 2500,
+        offset: Int = 0,
+		program_name: String,
+		program_acronym: String,
+		program_short_description: String,
+		program_full_description: String,
+		program_external_url: String,
+		program_sort_order: Int
+    ): [Program]
+
+    sample (
+        first: Int = 2500,
+        offset: Int = 0,
+		sample_id: String,
+		sample_type: String,
+		sample_tumor_status: String,
+		sample_anatomic_site: String,
+		sample_age_at_collection: Int,
+		derived_from_specimen: String,
+		biosample_accession: String
+    ): [Sample]
+
+    specimen (
+        first: Int = 2500,
+        offset: Int = 0,
+		specimen_id: String
+    ): [Specimen]
+
+    study (
+        first: Int = 2500,
+        offset: Int = 0,
+		study_name: String,
+		study_acronym: String,
+		study_description: String,
+		short_description: String,
+		study_external_url: String,
+		primary_investigator_name: String,
+		primary_investigator_email: String,
+		co_investigator_name: String,
+		co_investigator_email: String,
+		phs_accession: String,
+		bioproject_accession: String,
+		index_date: String,
+		cds_requestor: String,
+		funding_agency: String,
+		funding_source_program_name: String,
+		grant_id: String,
+		clinical_trial_system: String,
+		clinical_trial_identifier: String,
+		clinical_trial_arm: String,
+		organism_species: String,
+		adult_or_childhood_study: String,
+		data_types: String,
+		file_types: String,
+		data_access_level: String,
+		cds_primary_bucket: String,
+		cds_secondary_bucket: String,
+		cds_tertiary_bucket: String,
+		number_of_participants: Float,
+		number_of_samples: Float,
+		study_data_types: String,
+		file_types_and_format: String,
+		size_of_data_being_uploaded: Float,
+		size_of_data_being_uploaded_unit: String,
+		size_of_data_being_uploaded_original: Float,
+		size_of_data_being_uploaded_original_unit: String,
+		acl: String,
+		study_access: String
+    ): [Study]
+
+    treatment (
+        first: Int = 2500,
+        offset: Int = 0,
+		treatment_id: String,
+		treatment_type: String,
+		treatment_outcome: String,
+		days_to_treatment: Int,
+		therapeutic_agents: String
+    ): [Treatment]
 
     searchSubjects (
         subject_ids: [String] = [],
