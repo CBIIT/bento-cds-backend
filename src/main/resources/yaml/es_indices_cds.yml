@@ -633,6 +633,8 @@ Indices:
         type: keyword
       image_modality_sort:
         type: keyword
+      sample_id_sort:
+        type: keyword
       # Global search properties
       file_id_gs:
         type: search_as_you_type
@@ -734,7 +736,8 @@ Indices:
           analyte_type_sort: apoc.text.join(sample_type, ''),
           sample_id: sample_id,
           sample_ids: sample_id,
-          sample_id_gs: sample_id
+          sample_id_gs: sample_id,
+          sample_id_sort: apoc.text.join(sample_id, '')
         }) AS opensearch_data
       OPTIONAL MATCH (f)<--(g:genomic_info)
       WITH f, na, opensearch_data, 

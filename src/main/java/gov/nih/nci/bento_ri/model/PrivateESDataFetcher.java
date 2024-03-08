@@ -401,7 +401,7 @@ public class PrivateESDataFetcher extends AbstractPrivateESDataFetcher {
                 new String[]{"accesses", "accesses"},
                 new String[]{"phs_accession", "phs_accession"},
                 new String[]{"subject_id", "subject_ids"},
-                new String[]{"sample_id", "sample_id"},
+                new String[]{"sample_id", "sample_id_sort"},
                 new String[]{"experimental_strategy", "experimental_strategies"},
                 new String[]{"gender", "genders"},
                 new String[]{"analyte_type", "analyte_type"},
