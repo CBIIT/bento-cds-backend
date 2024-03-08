@@ -239,14 +239,6 @@ schema {
 
 type QueryType {
     "Get lists of all subject ids, used by Local Find"
-    idsLists: IdsLists @cypher(statement: """
-        MATCH (p:participant)
-        RETURN {
-            subjectIds: COLLECT(DISTINCT p.participant_id)
-        }
-    """, passThrough: true)
-
-
     # Study Detail Page
     studyDetail(phs_accession: String): StudyDetail @cypher(statement:  """
         MATCH (s:study {phs_accession: $phs_accession})
