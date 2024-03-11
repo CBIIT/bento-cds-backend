@@ -346,6 +346,10 @@ type SubjectResult {
     phs_accession: String
 }
 
+type IdsListsES {
+    subjectIds: [String]
+}
+
 schema {
     query: QueryType
 }
@@ -502,6 +506,8 @@ type QueryType {
 		days_to_treatment: Int,
 		therapeutic_agents: String
     ): [Treatment]
+
+    idsLists: IdsListsES
 
     searchSubjects (
         subject_ids: [String] = [],
