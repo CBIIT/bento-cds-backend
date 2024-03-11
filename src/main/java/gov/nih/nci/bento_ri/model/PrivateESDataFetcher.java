@@ -113,7 +113,6 @@ public class PrivateESDataFetcher extends AbstractPrivateESDataFetcher {
                             Map<String, Object> args = env.getArguments();
                             return findSubjectIdsInList(args);
                         })
-                        .dataFetcher("idsLists", env -> idsLists())
                 )
                 .build();
     }
@@ -773,45 +772,6 @@ public class PrivateESDataFetcher extends AbstractPrivateESDataFetcher {
 
         return result;
     }
-
-    private Map<String, String[]> idsLists() throws IOException {
-        /*
-        Index properties map definition template:
-        Map.of(
-            <ES Index Endpoint>, new String[][]{
-                    new String[]{<Return Label>, <ES Index property name>}
-            },
-        */
-        Map<String, String[][]> indexProperties = Map.of(
-                SUBJECT_IDS_END_POINT, new String[][]{
-                        new String[]{"subjectIds", "subject_id"}
-                }
-        );
-        //Generic Query
-        Map<String, Object> query = esService.buildListQuery();
-        //Results Map
-        Map<String, String[]> results = new HashMap<>();
-        //Iterate through each index properties map and make a request to each endpoint then format the results as
-        // String arrays
-        for (String endpoint: indexProperties.keySet()){
-            Request request = new Request("GET", endpoint);
-            String[][] properties = indexProperties.get(endpoint);
-            List<Map<String, Object>> result = esService.collectPage(request, query, properties, ESService.MAX_ES_SIZE,
-                    0);
-            Map<String, List<String>> indexResults = new HashMap<>();
-            Arrays.asList(properties).forEach(x -> indexResults.put(x[0], new ArrayList<>()));
-            for(Map<String, Object> resultElement: result){
-                for(String key: indexResults.keySet()){
-                    indexResults.get(key).add((String) resultElement.get(key));
-                }
-            }
-            for(String key: indexResults.keySet()){
-                results.put(key, indexResults.get(key).toArray(new String[indexResults.size()]));
-            }
-        }
-        return results;
-    }
-
 
     private List paginate(List org, int pageSize, int offset) {
         List<Object> result = new ArrayList<>();

@@ -1791,6 +1791,18 @@ Indices:
         }) ELSE NULL END AS samples
     "
 
+  - index_name: subject_ids_list
+    type: neo4j
+    # type mapping for each property of the index
+    mapping:
+      subjectIds:
+        type: keyword
+    # Cypher query will be used to retrieve data from Neo4j, and index into Elasticsearch
+    cypher_query: "
+      MATCH (p:participant)-->(s:study)
+      RETURN
+        CASE WHEN p IS NOT NULL THEN COLLECT(DISTINCT toLower(p.participant_id)) END AS subjectIds
+  "
 
 # Subject IDs index
   - index_name: subject_ids
