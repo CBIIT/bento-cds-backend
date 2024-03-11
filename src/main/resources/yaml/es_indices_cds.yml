@@ -1801,7 +1801,7 @@ Indices:
     cypher_query: "
       MATCH (p:participant)-->(s:study)
       RETURN
-        CASE WHEN p IS NOT NULL THEN COLLECT(DISTINCT toLower(p.participant_id)) END AS subjectIds
+      COLLECT(DISTINCT toLower(p.participant_id)) AS subjectIds
   "
 
 # Subject IDs index
