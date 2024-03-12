@@ -123,3 +123,10 @@ queries:
       type: default
     result:
       type: map
+  - name: programList
+    index:
+      - program_list
+    filter:
+      type: default
+    result:
+      type: object_array
