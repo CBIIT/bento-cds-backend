@@ -350,6 +350,13 @@ type IdsListsES {
     subjectIds: [String]
 }
 
+type ProgramListEntry {
+    acronym: String
+    name: String
+    website: String
+    num_studies: Int
+}
+
 schema {
     query: QueryType
 }
@@ -509,6 +516,7 @@ type QueryType {
 
     idsLists: IdsListsES
 
+    programList: [ProgramListEntry]
     searchSubjects (
         subject_ids: [String] = [],
 
