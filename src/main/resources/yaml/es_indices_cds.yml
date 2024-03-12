@@ -1791,6 +1791,122 @@ Indices:
         }) ELSE NULL END AS samples
     "
 
+  - index_name: program_detail
+    type: neo4j
+    # type mapping for each property of the index
+    mapping:
+      program:
+        type: keyword
+      program_name:
+        type: keyword
+      program_url:
+        type: keyword
+      program_short_description:
+        type: keyword
+      num_studies:
+        type: integer
+      num_participants:
+        type: integer
+      num_files:
+        type: integer
+      num_samples:
+        type: integer
+      num_disease_sites:
+        type: integer
+      study_participants:
+        type: nested
+        properties:
+          group:
+            type: keyword
+          subjects:
+            type: integer
+      studies:
+        type: nested
+        properties:
+          accession:
+            type: keyword
+          study_access:
+            type: keyword
+          study_name:
+            type: keyword
+          study_description:
+            type: keyword
+          short_description:
+            type: keyword
+          num_participants:
+            type: integer
+          num_samples:
+            type: integer
+
+    # Cypher query will be used to retrieve data from Neo4j, and index into Elasticsearch
+    cypher_query: "
+      MATCH (pr:program)
+      OPTIONAL MATCH (pr)<--(s:study)
+      WITH s
+      OPTIONAL MATCH (s)<--(p:participant)
+      WITH s, count(distinct p) as num_participants
+      WITH s,
+          {
+              group: s.study_name,
+              subjects: num_participants
+          } AS study_participants,
+          {
+              accession: s.phs_accession,
+              study_access: s.study_access,
+              study_name: s.study_name,
+              study_description: s.study_description,
+              short_description: s.short_description,
+              num_participants: num_participants
+          } AS studies
+      OPTIONAL MATCH (s)<--(:participant)<--(samp:sample)
+      WITH s, study_participants,
+          apoc.map.merge(studies, {
+              num_samples: count(distinct samp)
+          }) AS studies
+      OPTIONAL MATCH (pr:program)<--(s)
+      WITH pr, {
+          program: pr.program_acronym,
+          program_name: pr.program_name,
+          program_url: pr.program_external_url,
+          program_short_description: pr.program_short_description,
+          num_studies: COUNT(DISTINCT s),
+          studies: collect(distinct studies),
+          study_participants: collect(distinct study_participants)
+      } as output
+      OPTIONAL MATCH (pr)<--(:study)<--(p:participant)
+      WITH pr,
+          apoc.map.merge(output, {
+              num_participants: count(distinct p)
+          }) as output
+      OPTIONAL MATCH (pr)<--(:study)<--(:participant)<--(samp:sample)
+      WITH pr,
+          apoc.map.merge(output, {
+              num_samples: count(distinct samp)
+          }) as output
+      OPTIONAL MATCH (pr)<--(:study)<--(f:file)
+      WITH pr,
+          apoc.map.merge(output, {
+              num_files: count(distinct f)
+          }) as output
+      OPTIONAL MATCH (pr)<--(:study)<--(:participant)<--(diag:diagnosis)
+      WITH pr,
+          apoc.map.merge(output, {
+              num_disease_sites: COUNT(DISTINCT diag.primary_site)
+          }) as output
+      RETURN 
+        output.program AS program,
+        output.program_name AS program_name,
+        output.program_url AS program_url,
+        output.program_short_description AS program_short_description,
+        output.num_studies AS num_studies,
+        output.num_participants AS num_participants,
+        output.num_files AS num_files,
+        output.num_samples AS num_samples,
+        output.num_disease_sites AS num_disease_sites,
+        output.study_participants AS study_participants,
+        output.studies AS studies
+  "
+
   - index_name: subject_ids_list
     type: neo4j
     # type mapping for each property of the index

@@ -197,42 +197,12 @@ type IdsLists {
     subjectIds: [String]
 }
 
-type ProgramDetail {
-    program: String
-    program_name: String
-    program_url: String
-    program_short_description: String
-    num_studies: Int
-    num_participants: Int
-    num_files: Int
-    num_samples: Int
-    num_disease_sites: Int
-    study_participants: [GroupCountNeo4j]
-    studies: [ProgramDetailStudy]
-}
-
-type ProgramDetailStudy {
-    accession: String
-    study_access: String
-    study_name: String
-    study_description: String
-    short_description: String
-    num_participants: Int
-    num_samples: Int
-}
-
 type ProgramListEntry {
     acronym: String
     name: String
     website: String
     num_studies: Int
 }
-
-type GroupCountNeo4j {
-    group: String
-    subjects: Int
-}
-
 schema {
     query: QueryType
 }
@@ -324,63 +294,6 @@ type QueryType {
             numberOfFiles: num_files
         }
     """, passThrough: true)
-
-    programDetail(program_name: String!): ProgramDetail @cypher(statement: """
-        MATCH (pr:program {program_name: $program_name})
-        OPTIONAL MATCH (pr)<--(s:study)
-        WITH s
-        OPTIONAL MATCH (s)<--(p:participant)
-        WITH s, count(distinct p) as num_participants
-        WITH s,
-            {
-                group: s.study_name,
-                subjects: num_participants
-            } AS study_participants,
-            {
-                accession: s.phs_accession,
-                study_access: s.study_access,
-                study_name: s.study_name,
-                study_description: s.study_description,
-                short_description: s.short_description,
-                num_participants: num_participants
-            } AS studies
-        OPTIONAL MATCH (s)<--(:participant)<--(samp:sample)
-        WITH s, study_participants,
-            apoc.map.merge(studies, {
-                num_samples: count(distinct samp)
-            }) AS studies
-        OPTIONAL MATCH (pr:program)<--(s)
-        WITH pr, {
-            program: pr.program_acronym,
-            program_name: pr.program_name,
-            program_url: pr.program_external_url,
-            program_short_description: pr.program_short_description,
-            num_studies: COUNT(DISTINCT s),
-            studies: collect(distinct studies),
-            study_participants: collect(distinct study_participants)
-        } as output
-        OPTIONAL MATCH (pr)<--(:study)<--(p:participant)
-        WITH pr,
-            apoc.map.merge(output, {
-                num_participants: count(distinct p)
-            }) as output
-        OPTIONAL MATCH (pr)<--(:study)<--(:participant)<--(samp:sample)
-        WITH pr,
-            apoc.map.merge(output, {
-                num_samples: count(distinct samp)
-            }) as output
-        OPTIONAL MATCH (pr)<--(:study)<--(f:file)
-        WITH pr,
-            apoc.map.merge(output, {
-                num_files: count(distinct f)
-            }) as output
-        OPTIONAL MATCH (pr)<--(:study)<--(:participant)<--(diag:diagnosis)
-        WITH pr,
-            apoc.map.merge(output, {
-                num_disease_sites: COUNT(DISTINCT diag.primary_site)
-            }) as output
-        RETURN output
-    """, passThrough: true) 
 
     programList: [ProgramListEntry] @cypher(statement: """
         MATCH (pr:program)

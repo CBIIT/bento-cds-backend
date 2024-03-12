@@ -123,3 +123,10 @@ queries:
       type: default
     result:
       type: map
+  - name: programDetail
+    index:
+      - program_detail
+    filter:
+      type: default
+    result:
+      type: map
