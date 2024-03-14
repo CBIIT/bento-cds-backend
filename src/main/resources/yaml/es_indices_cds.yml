@@ -233,7 +233,7 @@ Indices:
           file_type:
             type: keyword
           file_description:
-            type: long
+            type: keyword
           file_size:
             type: long
           md5sum:
@@ -298,7 +298,13 @@ Indices:
         \"Not specified in data\" AS na, 
         apoc.map.merge(opensearch_data, {
           is_tumor: samp.sample_tumor_status,
+          sample_type: samp.sample_type,
           analyte_type: samp.sample_type,
+          sample_tumor_status: samp.sample_tumor_status,
+          sample_anatomic_site: samp.sample_anatomic_site,
+          sample_age_at_collection: samp.sample_age_at_collection,
+          derived_from_specimen: samp.derived_from_specimen,
+          biosample_accession: samp.biosample_accession,
           sample_id: samp.sample_id,
           sample_ids: samp.sample_id
         }) AS opensearch_data
