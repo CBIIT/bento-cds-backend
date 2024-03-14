@@ -1177,15 +1177,55 @@ Indices:
     # Cypher query will be used to retrieve data from Neo4j, and index into Elasticsearch
     cypher_query: "
       MATCH (p:program)
-      WITH p, \"program\" as type
+      OPTIONAL MATCH (s:study) 
+      WITH p, s, \"program\" as type
       RETURN
         p.program_name AS program_name,
+        p.program_acronym AS program_acronym,
         p.program_short_description AS program_short_description,
         p.program_full_description AS program_full_description,
         p.program_external_url AS program_external_url,
         p.program_sort_order AS program_sort_order,
         p.program_sort_order AS program_sort_order_kw,
-        type
+        type,
+        CASE WHEN s IS NOT NULL THEN COLLECT(DISTINCT {
+          study_name: s.study_name,
+          study_acronym: s.study_acronym,
+          study_description: s.study_description,
+          short_description: s.short_description,
+          study_external_url: s.study_external_url,
+          primary_investigator_name: s.primary_investigator_name,
+          primary_investigator_email: s.primary_investigator_email,
+          co_investigator_name: s.co_investigator_name,
+          co_investigator_email: s.co_investigator_email,
+          phs_accession: s.phs_accession,
+          bioproject_accession: s.bioproject_accession,
+          index_date: s.index_date,
+          cds_requestor: s.cds_requestor,
+          funding_agency: s.funding_agency,
+          funding_source_program_name: s.funding_source_program_name,
+          grant_id: s.grant_id,
+          clinical_trial_system: s.clinical_trial_system,
+          clinical_trial_identifier: s.clinical_trial_identifier,
+          clinical_trial_arm: s.clinical_trial_arm,
+          organism_species: s.organism_species,
+          adult_or_childhood_study: s.adult_or_childhood_study,
+          data_types: s.data_types,
+          file_types: s.file_types,
+          data_access_level: s.data_access_level,
+          cds_primary_bucket: s.cds_primary_bucket,
+          cds_secondary_bucket: s.cds_secondary_bucket,
+          cds_tertiary_bucket: s.cds_tertiary_bucket,
+          number_of_participants: s.number_of_participants,
+          number_of_samples: s.number_of_samples,
+          file_types_and_format: s.file_types_and_format,
+          size_of_data_being_uploaded: s.size_of_data_being_uploaded,
+          size_of_data_being_uploaded_unit: s.size_of_data_being_uploaded_unit,
+          size_of_data_being_uploaded_original: s.size_of_data_being_uploaded_original,
+          size_of_data_being_uploaded_original_unit: s.size_of_data_being_uploaded_original_unit,
+          acl: s.acl,
+          study_access: s.study_access
+        }) ELSE NULL END AS studies
     "
 # Studies index
   - index_name: studies
