@@ -353,7 +353,6 @@ Indices:
           reference_genome_assemblies: apoc.coll.sort(COLLECT(DISTINCT COALESCE(g.reference_genome_assembly, na))),
           genomic_info: CASE WHEN g IS NOT NULL THEN COLLECT(DISTINCT {
             library_id: g.library_id,
-            sample_type: g.sample_type,
             bases: g.bases,
             number_of_reads: g.number_of_reads,
             avg_read_length: g.avg_read_length,
