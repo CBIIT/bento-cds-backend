@@ -1919,7 +1919,28 @@ Indices:
       RETURN
       COLLECT(DISTINCT toLower(p.participant_id)) AS subjectIds
   "
-
+  - index_name: program_list
+    type: neo4j
+    # type mapping for each property of the index
+    mapping:
+      acronym:
+        type: keyword
+      name:
+        type: keyword
+      website:
+        type: keyword
+      num_studies:
+        type: keyword
+    # Cypher query will be used to retrieve data from Neo4j, and index into Elasticsearch
+    cypher_query: "
+      MATCH (pr:program)
+      OPTIONAL MATCH (pr)<--(s:study)
+      RETURN DISTINCT
+        pr.program_acronym AS acronym,
+        pr.program_name AS name,
+        pr.program_external_url AS website,
+        COUNT(DISTINCT s) AS num_studies
+  "
 # Subject IDs index
   - index_name: subject_ids
     type: neo4j

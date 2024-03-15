@@ -350,6 +350,13 @@ type IdsListsES {
     subjectIds: [String]
 }
 
+type ProgramListEntry {
+    acronym: String
+    name: String
+    website: String
+    num_studies: Int
+}
+
 type ProgramDetail {
     program: String
     program_name: String
@@ -538,6 +545,8 @@ type QueryType {
     ): [Treatment]
 
     idsLists: IdsListsES
+
+    programList: [ProgramListEntry]
     programDetail(program_name: String): ProgramDetail
     searchSubjects (
         subject_ids: [String] = [],
