@@ -294,15 +294,4 @@ type QueryType {
             numberOfFiles: num_files
         }
     """, passThrough: true)
-
-    programList: [ProgramListEntry] @cypher(statement: """
-        MATCH (pr:program)
-        OPTIONAL MATCH (pr)<--(s:study)
-        RETURN DISTINCT {
-            acronym: pr.program_acronym,
-            name: pr.program_name,
-            website: pr.program_external_url,
-            num_studies: COUNT(DISTINCT s)
-        }
-    """, passThrough: true)
 }
