@@ -171,19 +171,6 @@ type SubjectDetail {
     numberOfFiles: Int
 }
 
-type StudyDetail {
-    study_name: String
-    phs_accession: String
-    study_acronym: String
-    study_description: String
-    data_types: String
-    study_external_url: String
-    numberOfSubjects: Int
-    numberOfSamples: Int
-    numberOfDiseaseSites: Int
-    numberOfFiles: Int
-}
-
 type StudyInfo {
     study_name: String
     phs_accession: String
@@ -197,53 +184,12 @@ type IdsLists {
     subjectIds: [String]
 }
 
-type ProgramListEntry {
-    acronym: String
-    name: String
-    website: String
-    num_studies: Int
-}
 schema {
     query: QueryType
 }
 
 type QueryType {
     "Get lists of all subject ids, used by Local Find"
-    # Study Detail Page
-    studyDetail(phs_accession: String): StudyDetail @cypher(statement:  """
-        MATCH (s:study {phs_accession: $phs_accession})
-        WITH s, {
-            study_name: s.study_name,
-            phs_accession: s.phs_accession,
-            study_acronym: s.study_acronym,
-            study_description: s.study_description,
-            data_types: s.study_data_types,
-            study_external_url: s.study_external_url
-        } AS output
-        OPTIONAL MATCH (s)<--(p:participant)
-        WITH s,
-            apoc.map.merge(output, {
-                numberOfSubjects: COUNT(DISTINCT p)
-            }) AS output
-        OPTIONAL MATCH (s)<--(:participant)<--(samp:sample)
-        WITH s,
-            apoc.map.merge(output, {
-                numberOfSamples: COUNT(DISTINCT samp)
-            }) AS output
-        OPTIONAL MATCH (s)<--(:participant)<--(diag:diagnosis)
-        WITH s,
-            apoc.map.merge(output, {
-                numberOfDiseaseSites: COUNT(DISTINCT diag.primary_site)
-            }) AS output
-        OPTIONAL MATCH (s)<--(f:file)
-        WITH s,
-            apoc.map.merge(output, {
-                numberOfFiles: COUNT(DISTINCT f)
-            }) AS output
-        RETURN output
-    """, passThrough: true)
-
-
     # Subject Detail Page
     subjectDetail(subject_id: String): SubjectDetail @cypher(statement:  """
         MATCH (s:study)<--(p:participant {participant_id: $subject_id})

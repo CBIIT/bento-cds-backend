@@ -387,6 +387,19 @@ type ProgramDetailStudy {
     num_samples: Int
 }
 
+type StudyDetail {
+    study_name: String
+    phs_accession: String
+    study_acronym: String
+    study_description: String
+    data_types: String
+    study_external_url: String
+    numberOfSubjects: Int
+    numberOfSamples: Int
+    numberOfDiseaseSites: Int
+    numberOfFiles: Int
+}
+
 schema {
     query: QueryType
 }
@@ -548,6 +561,7 @@ type QueryType {
 
     programList: [ProgramListEntry]
     programDetail(program_name: String): ProgramDetail
+    studyDetail(phs_accession: String): StudyDetail
     searchSubjects (
         subject_ids: [String] = [],
 
