@@ -233,7 +233,7 @@ Indices:
           file_type:
             type: keyword
           file_description:
-            type: long
+            type: keyword
           file_size:
             type: long
           md5sum:
@@ -298,7 +298,13 @@ Indices:
         \"Not specified in data\" AS na, 
         apoc.map.merge(opensearch_data, {
           is_tumor: samp.sample_tumor_status,
+          sample_type: samp.sample_type,
           analyte_type: samp.sample_type,
+          sample_tumor_status: samp.sample_tumor_status,
+          sample_anatomic_site: samp.sample_anatomic_site,
+          sample_age_at_collection: samp.sample_age_at_collection,
+          derived_from_specimen: samp.derived_from_specimen,
+          biosample_accession: samp.biosample_accession,
           sample_id: samp.sample_id,
           sample_ids: samp.sample_id
         }) AS opensearch_data
@@ -353,7 +359,6 @@ Indices:
           reference_genome_assemblies: apoc.coll.sort(COLLECT(DISTINCT COALESCE(g.reference_genome_assembly, na))),
           genomic_info: CASE WHEN g IS NOT NULL THEN COLLECT(DISTINCT {
             library_id: g.library_id,
-            sample_type: g.sample_type,
             bases: g.bases,
             number_of_reads: g.number_of_reads,
             avg_read_length: g.avg_read_length,
@@ -1172,15 +1177,55 @@ Indices:
     # Cypher query will be used to retrieve data from Neo4j, and index into Elasticsearch
     cypher_query: "
       MATCH (p:program)
-      WITH p, \"program\" as type
+      OPTIONAL MATCH (s:study) 
+      WITH p, s, \"program\" as type
       RETURN
         p.program_name AS program_name,
+        p.program_acronym AS program_acronym,
         p.program_short_description AS program_short_description,
         p.program_full_description AS program_full_description,
         p.program_external_url AS program_external_url,
         p.program_sort_order AS program_sort_order,
         p.program_sort_order AS program_sort_order_kw,
-        type
+        type,
+        CASE WHEN s IS NOT NULL THEN COLLECT(DISTINCT {
+          study_name: s.study_name,
+          study_acronym: s.study_acronym,
+          study_description: s.study_description,
+          short_description: s.short_description,
+          study_external_url: s.study_external_url,
+          primary_investigator_name: s.primary_investigator_name,
+          primary_investigator_email: s.primary_investigator_email,
+          co_investigator_name: s.co_investigator_name,
+          co_investigator_email: s.co_investigator_email,
+          phs_accession: s.phs_accession,
+          bioproject_accession: s.bioproject_accession,
+          index_date: s.index_date,
+          cds_requestor: s.cds_requestor,
+          funding_agency: s.funding_agency,
+          funding_source_program_name: s.funding_source_program_name,
+          grant_id: s.grant_id,
+          clinical_trial_system: s.clinical_trial_system,
+          clinical_trial_identifier: s.clinical_trial_identifier,
+          clinical_trial_arm: s.clinical_trial_arm,
+          organism_species: s.organism_species,
+          adult_or_childhood_study: s.adult_or_childhood_study,
+          data_types: s.data_types,
+          file_types: s.file_types,
+          data_access_level: s.data_access_level,
+          cds_primary_bucket: s.cds_primary_bucket,
+          cds_secondary_bucket: s.cds_secondary_bucket,
+          cds_tertiary_bucket: s.cds_tertiary_bucket,
+          number_of_participants: s.number_of_participants,
+          number_of_samples: s.number_of_samples,
+          file_types_and_format: s.file_types_and_format,
+          size_of_data_being_uploaded: s.size_of_data_being_uploaded,
+          size_of_data_being_uploaded_unit: s.size_of_data_being_uploaded_unit,
+          size_of_data_being_uploaded_original: s.size_of_data_being_uploaded_original,
+          size_of_data_being_uploaded_original_unit: s.size_of_data_being_uploaded_original_unit,
+          acl: s.acl,
+          study_access: s.study_access
+        }) ELSE NULL END AS studies
     "
 # Studies index
   - index_name: studies
@@ -1790,6 +1835,122 @@ Indices:
           biosample_accession: samp.biosample_accession
         }) ELSE NULL END AS samples
     "
+
+  - index_name: program_detail
+    type: neo4j
+    # type mapping for each property of the index
+    mapping:
+      program:
+        type: keyword
+      program_name:
+        type: keyword
+      program_url:
+        type: keyword
+      program_short_description:
+        type: keyword
+      num_studies:
+        type: integer
+      num_participants:
+        type: integer
+      num_files:
+        type: integer
+      num_samples:
+        type: integer
+      num_disease_sites:
+        type: integer
+      study_participants:
+        type: nested
+        properties:
+          group:
+            type: keyword
+          subjects:
+            type: integer
+      studies:
+        type: nested
+        properties:
+          accession:
+            type: keyword
+          study_access:
+            type: keyword
+          study_name:
+            type: keyword
+          study_description:
+            type: keyword
+          short_description:
+            type: keyword
+          num_participants:
+            type: integer
+          num_samples:
+            type: integer
+
+    # Cypher query will be used to retrieve data from Neo4j, and index into Elasticsearch
+    cypher_query: "
+      MATCH (pr:program)
+      OPTIONAL MATCH (pr)<--(s:study)
+      WITH s
+      OPTIONAL MATCH (s)<--(p:participant)
+      WITH s, count(distinct p) as num_participants
+      WITH s,
+          {
+              group: s.study_name,
+              subjects: num_participants
+          } AS study_participants,
+          {
+              accession: s.phs_accession,
+              study_access: s.study_access,
+              study_name: s.study_name,
+              study_description: s.study_description,
+              short_description: s.short_description,
+              num_participants: num_participants
+          } AS studies
+      OPTIONAL MATCH (s)<--(:participant)<--(samp:sample)
+      WITH s, study_participants,
+          apoc.map.merge(studies, {
+              num_samples: count(distinct samp)
+          }) AS studies
+      OPTIONAL MATCH (pr:program)<--(s)
+      WITH pr, {
+          program: pr.program_acronym,
+          program_name: pr.program_name,
+          program_url: pr.program_external_url,
+          program_short_description: pr.program_short_description,
+          num_studies: COUNT(DISTINCT s),
+          studies: collect(distinct studies),
+          study_participants: collect(distinct study_participants)
+      } as output
+      OPTIONAL MATCH (pr)<--(:study)<--(p:participant)
+      WITH pr,
+          apoc.map.merge(output, {
+              num_participants: count(distinct p)
+          }) as output
+      OPTIONAL MATCH (pr)<--(:study)<--(:participant)<--(samp:sample)
+      WITH pr,
+          apoc.map.merge(output, {
+              num_samples: count(distinct samp)
+          }) as output
+      OPTIONAL MATCH (pr)<--(:study)<--(f:file)
+      WITH pr,
+          apoc.map.merge(output, {
+              num_files: count(distinct f)
+          }) as output
+      OPTIONAL MATCH (pr)<--(:study)<--(:participant)<--(diag:diagnosis)
+      WITH pr,
+          apoc.map.merge(output, {
+              num_disease_sites: COUNT(DISTINCT diag.primary_site)
+          }) as output
+      RETURN 
+        output.program AS program,
+        output.program_name AS program_name,
+        output.program_url AS program_url,
+        output.program_short_description AS program_short_description,
+        output.num_studies AS num_studies,
+        output.num_participants AS num_participants,
+        output.num_files AS num_files,
+        output.num_samples AS num_samples,
+        output.num_disease_sites AS num_disease_sites,
+        output.study_participants AS study_participants,
+        output.studies AS studies
+  "
 
   - index_name: subject_ids_list
     type: neo4j
