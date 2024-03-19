@@ -396,6 +396,19 @@ type StudyInfo {
     study_access: String
 }
 
+type SubjectDetail {
+    subject_id: String
+    study_acronym: String
+    study_name: String
+    gender: String
+    site: [String]
+    files: [file]
+    samples: [sample]
+    numberOfSamples: Int
+    numberOfDiseaseSites: Int
+    numberOfFiles: Int
+}
+
 schema {
     query: QueryType
 }
@@ -557,6 +570,7 @@ type QueryType {
 
     programList: [ProgramListEntry]
     programDetail(program_name: String): ProgramDetail
+    subjectDetail(subject_id: String): SubjectDetail
     searchSubjects (
         subject_ids: [String] = [],
 

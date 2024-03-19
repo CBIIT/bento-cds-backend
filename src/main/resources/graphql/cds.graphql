@@ -158,19 +158,6 @@ type FileInfo {
     md5sum: String
 }
 
-type SubjectDetail {
-    subject_id: String
-    study_acronym: String
-    study_name: String
-    gender: String
-    site: [String]
-    files: [file]
-    samples: [sample]
-    numberOfSamples: Int
-    numberOfDiseaseSites: Int
-    numberOfFiles: Int
-}
-
 type StudyDetail {
     study_name: String
     phs_accession: String
@@ -225,37 +212,6 @@ type QueryType {
             apoc.map.merge(output, {
                 numberOfFiles: COUNT(DISTINCT f)
             }) AS output
-        RETURN output
-    """, passThrough: true)
-
-
-    # Subject Detail Page
-    subjectDetail(subject_id: String): SubjectDetail @cypher(statement:  """
-        MATCH (s:study)<--(p:participant {participant_id: $subject_id})
-        WITH p, {
-            subject_id: p.participant_id,
-            study_acronym: s.study_acronym,
-            study_name: s.study_name,
-            gender: p.gender
-        } AS output
-        OPTIONAL MATCH (p)<--(samp:sample)
-        WITH p,
-            apoc.map.merge(output, {
-                site: COLLECT(DISTINCT samp.sample_anatomic_site),
-                samples: COLLECT(DISTINCT samp{.*}),
-                numberOfSamples: COUNT(DISTINCT samp)
-            } AS output
-        OPTIONAL MATCH (p)<--(diag:diagnosis)
-        WITH p,
-            apoc.map.merge(output, {
-                numberOfDiseaseSites: COUNT(DISTINCT diag.primary_site)
-            } AS output
-        OPTIONAL MATCH (samp)<--(f:file)
-        WITH p,
-            apoc.map.merge(output, {
-                files: COLLECT(DISTINCT f{.*}),
-                numberOfFiles: COUNT(DISTINCT f)
-            } AS output
         RETURN output
     """, passThrough: true)
 
