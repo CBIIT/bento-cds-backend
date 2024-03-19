@@ -387,6 +387,15 @@ type ProgramDetailStudy {
     num_samples: Int
 }
 
+type StudyInfo {
+    study_name: String
+    phs_accession: String
+    data_type: String
+    numberOfSubjects: Int
+    numberOfFiles: Int
+    study_access: String
+}
+
 schema {
     query: QueryType
 }
@@ -677,4 +686,5 @@ type QueryType {
 
     globalSearch (input: String, first: Int = 10, offset: Int = 0): GlobalSearchResult
 
+    studyList: [StudyInfo]
 }

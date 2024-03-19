@@ -1998,7 +1998,6 @@ Indices:
       # subject_ids must be converted into lower case
       subject_ids:
         type: keyword
-
     # Cypher query will be used to retrieve data from Neo4j, and index into Elasticsearch
     cypher_query: "
       MATCH (p:participant)-->(s:study)
@@ -2006,6 +2005,35 @@ Indices:
         s.phs_accession AS phs_accession,
         p.participant_id AS subject_id,
         toLower(p.participant_id) AS subject_ids
+    "
+  - index_name: study_list
+    type: neo4j
+    mapping:
+      phs_accession:
+        type: keyword
+      study_name:
+        type: keyword
+      data_type:
+        type: keyword
+      study_access:
+        type: keyword
+      numberOfSubjects:
+        type: keyword
+      numberOfFiles:
+        type: keyword
+    cypher_query: "
+      MATCH (s:study)
+      OPTIONAL MATCH (p:participant)-->(s)
+      WITH s, count(distinct p) AS num_participants
+      OPTIONAL MATCH (f:file)-->(s)
+      WITH s, num_participants, count(distinct f) as num_files
+      RETURN 
+        s.phs_accession AS phs_accession,
+        s.study_name AS study_name,
+        s.study_data_types AS data_type,
+        s.study_access AS study_access,
+        num_participants AS numberOfSubjects,
+        num_files AS numberOfFiles
     "
 # About Page index
   - index_name: about_page
