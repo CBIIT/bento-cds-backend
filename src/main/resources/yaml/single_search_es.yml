@@ -137,10 +137,10 @@ queries:
       type: default
     result:
       type: map
-  - name: studyDetail
+  - name: studyList
     index:
-      - studies
+      - study_list
     filter:
       type: default
     result:
-      type: map
+      type: object_array

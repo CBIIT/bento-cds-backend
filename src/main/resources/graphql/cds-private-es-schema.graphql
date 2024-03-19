@@ -387,17 +387,13 @@ type ProgramDetailStudy {
     num_samples: Int
 }
 
-type StudyDetail {
+type StudyInfo {
     study_name: String
     phs_accession: String
-    study_acronym: String
-    study_description: String
-    data_types: String
-    study_external_url: String
+    data_type: String
     numberOfSubjects: Int
-    numberOfSamples: Int
-    numberOfDiseaseSites: Int
     numberOfFiles: Int
+    study_access: String
 }
 
 schema {
@@ -561,7 +557,6 @@ type QueryType {
 
     programList: [ProgramListEntry]
     programDetail(program_name: String): ProgramDetail
-    studyDetail(phs_accession: String): StudyDetail
     searchSubjects (
         subject_ids: [String] = [],
 
@@ -691,4 +686,5 @@ type QueryType {
 
     globalSearch (input: String, first: Int = 10, offset: Int = 0): GlobalSearchResult
 
+    studyList: [StudyInfo]
 }

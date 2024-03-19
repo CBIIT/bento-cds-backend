@@ -171,13 +171,17 @@ type SubjectDetail {
     numberOfFiles: Int
 }
 
-type StudyInfo {
+type StudyDetail {
     study_name: String
     phs_accession: String
-    data_type: String
+    study_acronym: String
+    study_description: String
+    data_types: String
+    study_external_url: String
     numberOfSubjects: Int
+    numberOfSamples: Int
+    numberOfDiseaseSites: Int
     numberOfFiles: Int
-    study_access: String
 }
 
 type IdsLists {
@@ -190,6 +194,41 @@ schema {
 
 type QueryType {
     "Get lists of all subject ids, used by Local Find"
+    # Study Detail Page
+    studyDetail(phs_accession: String): StudyDetail @cypher(statement:  """
+        MATCH (s:study {phs_accession: $phs_accession})
+        WITH s, {
+            study_name: s.study_name,
+            phs_accession: s.phs_accession,
+            study_acronym: s.study_acronym,
+            study_description: s.study_description,
+            data_types: s.study_data_types,
+            study_external_url: s.study_external_url
+        } AS output
+        OPTIONAL MATCH (s)<--(p:participant)
+        WITH s,
+            apoc.map.merge(output, {
+                numberOfSubjects: COUNT(DISTINCT p)
+            }) AS output
+        OPTIONAL MATCH (s)<--(:participant)<--(samp:sample)
+        WITH s,
+            apoc.map.merge(output, {
+                numberOfSamples: COUNT(DISTINCT samp)
+            }) AS output
+        OPTIONAL MATCH (s)<--(:participant)<--(diag:diagnosis)
+        WITH s,
+            apoc.map.merge(output, {
+                numberOfDiseaseSites: COUNT(DISTINCT diag.primary_site)
+            }) AS output
+        OPTIONAL MATCH (s)<--(f:file)
+        WITH s,
+            apoc.map.merge(output, {
+                numberOfFiles: COUNT(DISTINCT f)
+            }) AS output
+        RETURN output
+    """, passThrough: true)
+
+
     # Subject Detail Page
     subjectDetail(subject_id: String): SubjectDetail @cypher(statement:  """
         MATCH (s:study)<--(p:participant {participant_id: $subject_id})
@@ -223,21 +262,5 @@ type QueryType {
     samplesForSubjectId(subject_id: String!): [sample] @cypher(statement: """
         MATCH (p:participant {participant_id: $subject_id})<--(samp:sample)
         RETURN samp{.*}
-    """, passThrough: true)
-
-    studyList: [StudyInfo] @cypher(statement: """
-        MATCH (s:study)
-        OPTIONAL MATCH (p:participant)-->(s)
-        WITH s, count(distinct p) AS num_participants
-        OPTIONAL MATCH (f:file)-->(s)
-        WITH s, num_participants, count(distinct f) as num_files
-        RETURN {
-            phs_accession: s.phs_accession,
-            study_name: s.study_name,
-            data_type: s.study_data_types,
-            study_access: s.study_access,
-            numberOfSubjects: num_participants,
-            numberOfFiles: num_files
-        }
     """, passThrough: true)
 }
