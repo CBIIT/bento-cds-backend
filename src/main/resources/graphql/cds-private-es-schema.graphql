@@ -402,8 +402,8 @@ type SubjectDetail {
     study_name: String
     gender: String
     site: [String]
-    files: [file]
-    samples: [sample]
+    files: [File]
+    samples: [Sample]
     numberOfSamples: Int
     numberOfDiseaseSites: Int
     numberOfFiles: Int

@@ -150,4 +150,4 @@ queries:
     filter:
       type: default
     result:
-      type: object_array
+      type: map
