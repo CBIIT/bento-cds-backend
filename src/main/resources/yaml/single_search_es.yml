@@ -144,3 +144,10 @@ queries:
       type: default
     result:
       type: object_array
+  - name: subjectDetail
+    index:
+      - subject_detail
+    filter:
+      type: default
+    result:
+      type: map

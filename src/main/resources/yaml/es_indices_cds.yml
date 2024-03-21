@@ -1952,6 +1952,111 @@ Indices:
         output.studies AS studies
   "
 
+  - index_name: subject_detail
+    type: neo4j
+    mapping:
+      subject_id:
+        type: keyword
+      study_acronym:
+        type: keyword
+      study_name:
+        type: keyword
+      gender:
+        type: keyword
+      site:
+        type: keyword
+      numberOfSamples:
+        type: keyword
+      numberOfDiseaseSites:
+        type: keyword
+      numberOfFiles:
+        type: keyword
+      files:
+        type: nested
+        properties:
+          file_id:
+            type: keyword
+          file_name:
+            type: keyword
+          file_type:
+            type: keyword
+          file_description:
+            type: keyword
+          file_size:
+            type: keyword
+          md5sum:
+            type: keyword
+          file_url_in_cds:
+            type: keyword
+          experimental_strategy_and_data_subtypes:
+            type: keyword
+      samples:
+        type: nested
+        properties:
+          sample_id:
+            type: keyword
+          sample_type:
+            type: keyword
+          sample_tumor_status:
+            type: keyword
+          sample_anatomic_site:
+            type: keyword
+          sample_age_at_collection:
+            type: integer
+          derived_from_specimen:
+            type: keyword
+          biosample_accession:
+            type: keyword
+    cypher_query: "
+      MATCH (p:participant)
+      OPTIONAL MATCH (s:study)<--(p)
+      WITH p, {
+          subject_id: p.participant_id,
+          study_acronym: s.study_acronym,
+          study_name: s.study_name,
+          gender: p.gender
+      } AS opensearch_data
+      OPTIONAL MATCH (p)<--(samp:sample)
+      WITH p,
+          apoc.map.merge(opensearch_data, {
+              site: COLLECT(DISTINCT samp.sample_anatomic_site),
+              samples: CASE WHEN samp IS NOT NULL THEN COLLECT(DISTINCT {
+                sample_id: samp.sample_id,
+                sample_type: samp.sample_type,
+                sample_tumor_status: samp.sample_tumor_status,
+                sample_anatomic_site: samp.sample_anatomic_site,
+                sample_age_at_collection: samp.sample_age_at_collection,
+                derived_from_specimen: samp.derived_from_specimen,
+                biosample_accession: samp.biosample_accession
+              }) ELSE NULL END
+          }) AS opensearch_data
+      OPTIONAL MATCH (p)<--(diag:diagnosis)
+      WITH p,
+          apoc.map.merge(opensearch_data, {
+              numberOfDiseaseSites: COUNT(DISTINCT diag.primary_site)
+          }) AS opensearch_data
+      OPTIONAL MATCH (p)<--(samp)<--(f:file)
+      WITH p,
+        apoc.map.merge(opensearch_data, {
+            files: CASE WHEN f IS NOT NULL THEN COLLECT(DISTINCT {
+              file_id: f.file_id,
+              file_name: f.file_name,
+              file_type: f.file_type,
+              file_description: f.file_description,
+              file_size: f.file_size,
+              md5sum: f.md5sum,
+              file_url_in_cds: f.file_url_in_cds,
+              experimental_strategy_and_data_subtypes: f.experimental_strategy_and_data_subtypes
+            }) ELSE NULL END
+        }) AS opensearch_data
+      WITH p, 
+        apoc.map.merge(opensearch_data, {
+            numberOfFiles: size(opensearch_data.files),
+            numberOfSamples: COUNT(DISTINCT opensearch_data.samples)
+        }) AS opensearch_data
+      RETURN opensearch_data
+    "
+
   - index_name: subject_ids_list
     type: neo4j
     # type mapping for each property of the index
