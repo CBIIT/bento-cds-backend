@@ -203,6 +203,8 @@ Indices:
         type: keyword
       sample_ids:
         type: keyword
+      subject_id:
+        type: keyword
       subject_ids:
         type: keyword
       participant:
@@ -319,6 +321,7 @@ Indices:
       WITH samp, na,
         apoc.map.merge(opensearch_data, {
           genders: p.gender,
+          subject_id: p.participant_id,
           subject_ids: p.participant_id,
           participant: CASE WHEN p IS NOT NULL THEN {
             participant_id: p.participant_id,

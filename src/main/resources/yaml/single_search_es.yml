@@ -151,3 +151,10 @@ queries:
       type: default
     result:
       type: map
+  - name: samplesForSubjectId
+    index:
+      - samples
+    filter:
+      type: default
+    result:
+      type: object_array

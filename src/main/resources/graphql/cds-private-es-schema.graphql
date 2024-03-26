@@ -571,6 +571,7 @@ type QueryType {
     programList: [ProgramListEntry]
     programDetail(program_name: String): ProgramDetail
     subjectDetail(subject_id: String): SubjectDetail
+    samplesForSubjectId(subject_id: String): [Sample]
     searchSubjects (
         subject_ids: [String] = [],
 
