@@ -158,3 +158,10 @@ queries:
       type: default
     result:
       type: object_array
+  - name: studyDetail
+    index:
+      - study_detail
+    filter:
+      type: default
+    result:
+      type: map

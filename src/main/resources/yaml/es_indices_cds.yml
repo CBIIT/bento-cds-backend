@@ -2143,6 +2143,61 @@ Indices:
         num_participants AS numberOfSubjects,
         num_files AS numberOfFiles
     "
+  - index_name: study_detail
+    type: neo4j
+    mapping:
+      study_name:
+        type: keyword
+      phs_accession:
+        type: keyword
+      study_acronym:
+        type: keyword
+      study_description:
+        type: keyword
+      data_types:
+        type: keyword
+      study_external_url:
+        type: keyword
+      numberOfSubjects:
+        type: keyword
+      numberOfSamples:
+        type: keyword
+      numberOfDiseaseSites:
+        type: keyword
+      numberOfFiles:
+        type: keyword
+    cypher_query: "
+      MATCH (s:study)
+      WITH s, {
+          study_name: s.study_name,
+          phs_accession: s.phs_accession,
+          study_acronym: s.study_acronym,
+          study_description: s.study_description,
+          data_types: s.study_data_types,
+          study_external_url: s.study_external_url
+      } AS opensearch_data
+      OPTIONAL MATCH (s)<--(p:participant)
+      WITH s,
+          apoc.map.merge(opensearch_data, {
+              numberOfSubjects: COUNT(DISTINCT p)
+          }) AS opensearch_data
+      OPTIONAL MATCH (s)<--(:participant)<--(samp:sample)
+      WITH s,
+          apoc.map.merge(opensearch_data, {
+              numberOfSamples: COUNT(DISTINCT samp)
+          }) AS opensearch_data
+      OPTIONAL MATCH (s)<--(:participant)<--(diag:diagnosis)
+      WITH s,
+          apoc.map.merge(opensearch_data, {
+              numberOfDiseaseSites: COUNT(DISTINCT diag.primary_site)
+          }) AS opensearch_data
+      OPTIONAL MATCH (s)<--(f:file)
+      WITH s,
+          apoc.map.merge(opensearch_data, {
+              numberOfFiles: COUNT(DISTINCT f)
+          }) AS opensearch_data
+      RETURN opensearch_data
+    "
 # About Page index
   - index_name: about_page
     type: about_file
