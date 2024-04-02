@@ -409,6 +409,19 @@ type SubjectDetail {
     numberOfFiles: Int
 }
 
+type StudyDetail {
+    study_name: String
+    phs_accession: String
+    study_acronym: String
+    study_description: String
+    data_types: String
+    study_external_url: String
+    numberOfSubjects: Int
+    numberOfSamples: Int
+    numberOfDiseaseSites: Int
+    numberOfFiles: Int
+}
+
 schema {
     query: QueryType
 }
@@ -702,4 +715,6 @@ type QueryType {
     globalSearch (input: String, first: Int = 10, offset: Int = 0): GlobalSearchResult
 
     studyList: [StudyInfo]
+
+    studyDetail(phs_accession: String): StudyDetail
 }
