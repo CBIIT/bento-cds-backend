@@ -48,13 +48,13 @@ Indices:
         type: keyword
       # Global Search properties
       site_gs:
-        type: keyword
+        type: search_as_you_type
       study_gs:
-        type: keyword
+        type: search_as_you_type
       subject_id_gs:
-        type: keyword
+        type: search_as_you_type
       gender_gs:
-        type: keyword
+        type: search_as_you_type
       # Overview properties
       files:
         type: keyword
@@ -191,11 +191,11 @@ Indices:
         type: keyword
       # Global search properties
       sample_id_gs:
-        type: keyword
+        type: search_as_you_type
       is_tumor_gs:
-        type: keyword
+        type: search_as_you_type
       analyte_type_gs:
-        type: keyword
+        type: search_as_you_type
       # Overview properties
       analyte_type:
         type: keyword
@@ -582,35 +582,35 @@ Indices:
         type: keyword
       # Global search properties
       file_id_gs:
-        type: keyword
+        type: search_as_you_type
       file_name_gs:
-        type: keyword
+        type: search_as_you_type
       file_type_gs:
-        type: keyword
+        type: search_as_you_type
       subject_id_gs:
-        type: keyword
+        type: search_as_you_type
       sample_id_gs:
-        type: keyword
+        type: search_as_you_type
       accesses_gs:
-        type: keyword
+        type: search_as_you_type
       acl_gs:
-        type: keyword
+        type: search_as_you_type
       experimental_strategies_gs:
-        type: keyword
+        type: search_as_you_type
       instrument_models_gs:
-        type: keyword
+        type: search_as_you_type
       library_layouts_gs:
-        type: keyword
+        type: search_as_you_type
       library_selections_gs:
-        type: keyword
+        type: search_as_you_type
       library_sources_gs:
-        type: keyword
+        type: search_as_you_type
       library_strategies_gs:
-        type: keyword
+        type: search_as_you_type
       platforms_gs:
-        type: keyword
+        type: search_as_you_type
       reference_genome_assemblies_gs:
-        type: keyword
+        type: search_as_you_type
       samples:
         type: nested
         properties:
@@ -1240,13 +1240,13 @@ Indices:
       study_data_types:
         type: keyword
       study_code_gs:
-        type: keyword
+        type: search_as_you_type
       phs_accession_gs:
-        type: keyword
+        type: search_as_you_type
       study_name_gs:
-        type: keyword
+        type: search_as_you_type
       study_data_types_gs:
-        type: keyword
+        type: search_as_you_type
       study_name:
         type: keyword
       study_acronym:
@@ -2204,9 +2204,9 @@ Indices:
     # type mapping for each property of the index
     mapping:
       page:
-        type: keyword
+        type: search_as_you_type
       title:
-        type: keyword
+        type: search_as_you_type
       primaryContentImage:
         type: text
       content:
@@ -2218,7 +2218,7 @@ Indices:
     # type mapping for each property of the index
     mapping:
       node:
-        type: keyword
+        type: search_as_you_type
       node_kw:
         type: keyword
 # Model properties index
@@ -2228,17 +2228,17 @@ Indices:
     # type mapping for each property of the index
     mapping:
       node:
-        type: keyword
+        type: search_as_you_type
       property:
-        type: keyword
+        type: search_as_you_type
       property_kw:
         type: keyword
       property_description:
-        type: keyword
+        type: search_as_you_type
       property_required:
-        type: keyword
+        type: search_as_you_type
       property_type:
-        type: keyword
+        type: search_as_you_type
 # Model values index
   - index_name: model_values
     type: model
@@ -2246,16 +2246,16 @@ Indices:
     # type mapping for each property of the index
     mapping:
       node:
-        type: keyword
+        type: search_as_you_type
       property:
-        type: keyword
+        type: search_as_you_type
       property_description:
-        type: keyword
+        type: search_as_you_type
       property_required:
-        type: keyword
+        type: search_as_you_type
       property_type:
-        type: keyword
+        type: search_as_you_type
       value:
-        type: keyword
+        type: search_as_you_type
       value_kw:
         type: keyword
