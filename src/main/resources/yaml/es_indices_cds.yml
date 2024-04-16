@@ -48,13 +48,13 @@ Indices:
         type: keyword
       # Global Search properties
       site_gs:
-        type: search_as_you_type
+        type: keyword
       study_gs:
-        type: search_as_you_type
+        type: keyword
       subject_id_gs:
-        type: search_as_you_type
+        type: keyword
       gender_gs:
-        type: search_as_you_type
+        type: keyword
       # Overview properties
       files:
         type: keyword
@@ -191,11 +191,11 @@ Indices:
         type: keyword
       # Global search properties
       sample_id_gs:
-        type: search_as_you_type
+        type: keyword
       is_tumor_gs:
-        type: search_as_you_type
+        type: keyword
       analyte_type_gs:
-        type: search_as_you_type
+        type: keyword
       # Overview properties
       analyte_type:
         type: keyword
@@ -582,35 +582,35 @@ Indices:
         type: keyword
       # Global search properties
       file_id_gs:
-        type: search_as_you_type
+        type: keyword
       file_name_gs:
-        type: search_as_you_type
+        type: keyword
       file_type_gs:
-        type: search_as_you_type
+        type: keyword
       subject_id_gs:
-        type: search_as_you_type
+        type: keyword
       sample_id_gs:
-        type: search_as_you_type
+        type: keyword
       accesses_gs:
-        type: search_as_you_type
+        type: keyword
       acl_gs:
-        type: search_as_you_type
+        type: keyword
       experimental_strategies_gs:
-        type: search_as_you_type
+        type: keyword
       instrument_models_gs:
-        type: search_as_you_type
+        type: keyword
       library_layouts_gs:
-        type: search_as_you_type
+        type: keyword
       library_selections_gs:
-        type: search_as_you_type
+        type: keyword
       library_sources_gs:
-        type: search_as_you_type
+        type: keyword
       library_strategies_gs:
-        type: search_as_you_type
+        type: keyword
       platforms_gs:
-        type: search_as_you_type
+        type: keyword
       reference_genome_assemblies_gs:
-        type: search_as_you_type
+        type: keyword
       samples:
         type: nested
         properties:
@@ -1088,17 +1088,17 @@ Indices:
     # type mapping for each property of the index
     mapping:
       program_name:
-        type: search_as_you_type
+        type: keyword
       program_acronym:
-        type: search_as_you_type
+        type: keyword
       program_short_description:
-        type: search_as_you_type
+        type: keyword
       program_full_description:
-        type: search_as_you_type
+        type: keyword
       program_external_url:
-        type: search_as_you_type
+        type: keyword
       program_sort_order:
-        type: search_as_you_type
+        type: keyword
       program_sort_order_kw:
         type: keyword
       studies:
@@ -1240,13 +1240,13 @@ Indices:
       study_data_types:
         type: keyword
       study_code_gs:
-        type: search_as_you_type
+        type: keyword
       phs_accession_gs:
-        type: search_as_you_type
+        type: keyword
       study_name_gs:
-        type: search_as_you_type
+        type: keyword
       study_data_types_gs:
-        type: search_as_you_type
+        type: keyword
       study_name:
         type: keyword
       study_acronym:
@@ -1323,17 +1323,17 @@ Indices:
         type: nested
         properties:
           program_name:
-            type: search_as_you_type
+            type: keyword
           program_acronym:
-            type: search_as_you_type
+            type: keyword
           program_short_description:
-            type: search_as_you_type
+            type: keyword
           program_full_description:
-            type: search_as_you_type
+            type: keyword
           program_external_url:
-            type: search_as_you_type
+            type: keyword
           program_sort_order:
-            type: search_as_you_type
+            type: keyword
           program_sort_order_kw:
             type: keyword
       participants:
@@ -2204,9 +2204,9 @@ Indices:
     # type mapping for each property of the index
     mapping:
       page:
-        type: search_as_you_type
+        type: keyword
       title:
-        type: search_as_you_type
+        type: keyword
       primaryContentImage:
         type: text
       content:
@@ -2218,7 +2218,7 @@ Indices:
     # type mapping for each property of the index
     mapping:
       node:
-        type: search_as_you_type
+        type: keyword
       node_kw:
         type: keyword
 # Model properties index
@@ -2228,17 +2228,17 @@ Indices:
     # type mapping for each property of the index
     mapping:
       node:
-        type: search_as_you_type
+        type: keyword
       property:
-        type: search_as_you_type
+        type: keyword
       property_kw:
         type: keyword
       property_description:
-        type: search_as_you_type
+        type: keyword
       property_required:
-        type: search_as_you_type
+        type: keyword
       property_type:
-        type: search_as_you_type
+        type: keyword
 # Model values index
   - index_name: model_values
     type: model
@@ -2246,16 +2246,16 @@ Indices:
     # type mapping for each property of the index
     mapping:
       node:
-        type: search_as_you_type
+        type: keyword
       property:
-        type: search_as_you_type
+        type: keyword
       property_description:
-        type: search_as_you_type
+        type: keyword
       property_required:
-        type: search_as_you_type
+        type: keyword
       property_type:
-        type: search_as_you_type
+        type: keyword
       value:
-        type: search_as_you_type
+        type: keyword
       value_kw:
         type: keyword
