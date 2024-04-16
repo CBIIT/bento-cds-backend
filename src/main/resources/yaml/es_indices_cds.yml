@@ -1090,15 +1090,15 @@ Indices:
       program_name:
         type: keyword
       program_acronym:
-        type: keyword
+        type: search_as_you_type
       program_short_description:
-        type: keyword
+        type: search_as_you_type
       program_full_description:
-        type: keyword
+        type: search_as_you_type
       program_external_url:
-        type: keyword
+        type: search_as_you_type
       program_sort_order:
-        type: keyword
+        type: search_as_you_type
       program_sort_order_kw:
         type: keyword
       studies:
@@ -1325,15 +1325,15 @@ Indices:
           program_name:
             type: keyword
           program_acronym:
-            type: keyword
+            type: search_as_you_type
           program_short_description:
-            type: keyword
+            type: search_as_you_type
           program_full_description:
-            type: keyword
+            type: search_as_you_type
           program_external_url:
-            type: keyword
+            type: search_as_you_type
           program_sort_order:
-            type: keyword
+            type: search_as_you_type
           program_sort_order_kw:
             type: keyword
       participants:
