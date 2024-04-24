@@ -113,7 +113,7 @@ queries:
       - programs
     filter:
       type: pagination
-      defaultSortField: program_name
+      defaultSortField: program_name_kw
     result:
       type: object_array
   - name: idsLists

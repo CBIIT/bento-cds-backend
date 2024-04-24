@@ -1089,6 +1089,8 @@ Indices:
     mapping:
       program_name:
         type: search_as_you_type
+      program_name_kw:
+        type: keyword
       program_acronym:
         type: search_as_you_type
       program_short_description:
@@ -1184,6 +1186,7 @@ Indices:
       WITH p, s, \"program\" as type
       RETURN
         p.program_name AS program_name,
+        p.program_name AS program_name_kw,
         p.program_acronym AS program_acronym,
         p.program_short_description AS program_short_description,
         p.program_full_description AS program_full_description,
