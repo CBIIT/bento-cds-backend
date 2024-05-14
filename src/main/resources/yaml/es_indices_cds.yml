@@ -2073,7 +2073,7 @@ Indices:
     cypher_query: "
       MATCH (p:participant)-->(s:study)
       RETURN
-      COLLECT(DISTINCT toLower(p.participant_id)) AS subjectIds
+      COLLECT(DISTINCT p.participant_id) AS subjectIds
   "
   - index_name: program_list
     type: neo4j
@@ -2115,7 +2115,7 @@ Indices:
       RETURN
         s.phs_accession AS phs_accession,
         p.participant_id AS subject_id,
-        toLower(p.participant_id) AS subject_ids
+        p.participant_id AS subject_ids
     "
   - index_name: study_list
     type: neo4j
