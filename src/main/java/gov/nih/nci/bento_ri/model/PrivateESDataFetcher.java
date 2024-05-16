@@ -5,23 +5,19 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import gov.nih.nci.bento.constants.Const;
 import gov.nih.nci.bento.model.AbstractPrivateESDataFetcher;
-import gov.nih.nci.bento.model.search.MultipleRequests;
-import gov.nih.nci.bento.model.search.filter.DefaultFilter;
-import gov.nih.nci.bento.model.search.filter.FilterParam;
 import gov.nih.nci.bento.model.search.mapper.TypeMapperImpl;
 import gov.nih.nci.bento.model.search.mapper.TypeMapperService;
-import gov.nih.nci.bento.model.search.query.QueryParam;
 import gov.nih.nci.bento.model.search.yaml.YamlQueryFactory;
 import gov.nih.nci.bento.service.ESService;
 import graphql.schema.idl.RuntimeWiring;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.opensearch.action.search.SearchRequest;
 import org.opensearch.client.Request;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static graphql.schema.idl.TypeRuntimeWiring.newTypeWiring;
 
@@ -853,8 +849,13 @@ public class PrivateESDataFetcher extends AbstractPrivateESDataFetcher {
                 new String[]{"subject_id", "subject_id"},
                 new String[]{"phs_accession", "phs_accession"}
         };
-
-        Map<String, Object> query = esService.buildListQuery(params, Set.of(), true);
+        Map<String, Object> mutableParams = new HashMap<>(params);
+        mutableParams.computeIfPresent("subject_ids", (k, v) ->
+                ((List<String>) v).stream()
+                        .filter(Objects::nonNull)
+                        .map(String::toUpperCase)
+                        .collect(Collectors.toList()));
+        Map<String, Object> query = esService.buildListQuery(mutableParams, Set.of(), false);
         Request request = new Request("GET", SUBJECT_IDS_END_POINT);
 
         return esService.collectPage(request, query, properties, ESService.MAX_ES_SIZE, 0);
