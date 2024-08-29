@@ -14,6 +14,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.opensearch.client.Request;
 import org.springframework.stereotype.Component;
+import org.yaml.snakeyaml.LoaderOptions;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.IOException;
@@ -77,7 +78,9 @@ public class PrivateESDataFetcher extends AbstractPrivateESDataFetcher {
         yamlQueryFactory = new YamlQueryFactory(esService);
         HashMap<String, String> file_ids_map;
         try{
-            Yaml yaml = new Yaml();
+            LoaderOptions loaderOptions = new LoaderOptions();
+            loaderOptions.setCodePointLimit(10*1024*1024); //this is at least 10MB
+            Yaml yaml = new Yaml(loaderOptions);
             InputStream inputStream = this.getClass().getClassLoader().getResourceAsStream(ASSOCIATED_FILE_IDS_YAML);
             HashMap<String, HashMap<String, String>> file_ids_yaml = yaml.load(inputStream);
             file_ids_map = file_ids_yaml.get("file_associations");
