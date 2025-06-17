@@ -279,7 +279,7 @@ Indices:
             }) AS opensearch_data
           RETURN opensearch_data
           ORDER BY opensearch_data.subject_ids
-        page_size: 50000
+        page_size: 5000
   # Samples index
   - index_name: samples
     type: neo4j
@@ -562,7 +562,7 @@ Indices:
             }) AS opensearch_data
           RETURN opensearch_data
           ORDER BY opensearch_data.sample_id
-        page_size: 50000
+        page_size: 5000
   # Files index (split by experimental strategies)
   - index_name: file_experimental_strategies
     type: neo4j
@@ -747,7 +747,7 @@ Indices:
             }) AS opensearch_data
           RETURN opensearch_data
           ORDER BY opensearch_data.files
-        page_size: 50000
+        page_size: 5000
   # Files index
   - index_name: files
     type: neo4j
@@ -1119,7 +1119,7 @@ Indices:
             }) AS opensearch_data
           RETURN opensearch_data
           ORDER BY opensearch_data.files
-        page_size: 40000
+        page_size: 4000
   # Programs index
   - index_name: programs
     type: neo4j
@@ -2249,7 +2249,7 @@ Indices:
           } AS opensearch_data
           RETURN opensearch_data
           ORDER BY opensearch_data.aliquot_id
-        page_size: 50000
+        page_size: 5000
   # About Page index
   - index_name: about_page
     type: about_file
