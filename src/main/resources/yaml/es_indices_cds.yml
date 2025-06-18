@@ -562,7 +562,7 @@ Indices:
             }) AS opensearch_data
           RETURN opensearch_data
           ORDER BY opensearch_data.sample_id
-        page_size: 5000
+        page_size: 100
   # Files index (split by experimental strategies)
   - index_name: file_experimental_strategies
     type: neo4j
@@ -1325,6 +1325,7 @@ Indices:
         }) AS opensearch_data
       RETURN opensearch_data
       ORDER BY opensearch_data.study_code
+    page_size: 500
   - index_name: diagnosis
     type: neo4j
     mapping:
@@ -2207,6 +2208,7 @@ Indices:
             numberOfSamples: COUNT(DISTINCT opensearch_data.samples)
         }) AS opensearch_data
       RETURN opensearch_data
+    page_size: 5000
   - index_name: subject_ids_list
     type: neo4j
     # type mapping for each property of the index
