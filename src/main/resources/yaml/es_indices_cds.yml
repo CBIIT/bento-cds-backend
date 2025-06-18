@@ -1118,7 +1118,7 @@ Indices:
               associated_is_supplementary_file: associated_is_supplementary_file
             }) AS opensearch_data
           RETURN opensearch_data
-          ORDER BY opensea rch_data.files
+          ORDER BY opensearch_data.files
         page_size: 4000
   # Programs index
   - index_name: programs
@@ -1327,7 +1327,6 @@ Indices:
           RETURN opensearch_data
           ORDER BY opensearch_data.study_code
         page_size: 500
-        
   - index_name: diagnosis
     type: neo4j
     mapping:
