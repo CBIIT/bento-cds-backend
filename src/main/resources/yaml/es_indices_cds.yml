@@ -1263,8 +1263,9 @@ Indices:
     # Cypher query will be used to retrieve data from Neo4j, and index into Elasticsearch
     cypher_query: |
       MATCH (s:study)<--(:file)
-      WITH s, 'Not specified in data' AS na
-      WITH DISTINCT s, {
+      WITH DISTINCT s, 'Not specified in data' AS na
+      SKIP $skip LIMIT $limit
+      WITH s, {
         study_name: s.study_name,
         study_code: s.study_name,
         study_acronym: s.study_acronym,
@@ -1296,20 +1297,19 @@ Indices:
         number_of_participants: s.number_of_participants,
         number_of_samples: s.number_of_samples,
         study_data_types: s.study_data_types,
-        file_types_and_format: CASE WHEN s.file_types_and_format = '[]' THEN na ELSE apoc_replacement_poc.text_replace(s.file_types_and_format,'\\[|\\]|\\"|\'','') END,
+        file_types_and_format: CASE WHEN s.file_types_and_format = '[]' OR s.file_types_and_format IS NULL THEN na ELSE apoc_replacement_poc.text_replace(COALESCE(s.file_types_and_format, NULL),'\\[|\\]|\\"|\'','') END,
         size_of_data_being_uploaded: s.size_of_data_being_uploaded,
         size_of_data_being_uploaded_unit: s.size_of_data_being_uploaded_unit,
         size_of_data_being_uploaded_original: s.size_of_data_being_uploaded_original,
         size_of_data_being_uploaded_original_unit: s.size_of_data_being_uploaded_original_unit,
-        acl: CASE WHEN s.acl = '[]' THEN na ELSE apoc_replacement_poc.text_replace(s.acl,'\\[|\\]|\\"|\'','') END,
+        acl: CASE WHEN s.acl = '[]' OR s.acl IS NULL THEN na ELSE apoc_replacement_poc.text_replace(COALESCE(s.acl, NULL),'\\[|\\]|\\"|\'','') END,
         study_access: s.study_access,
-        study_version: CASE WHEN s.study_version = '[]' THEN na ELSE apoc_replacement_poc.text_replace(s.study_version,'\\[|\\]|\\"|\'','') END,
+        study_version: CASE WHEN s.study_version = '[]' OR s.study_version IS NULL THEN na ELSE apoc_replacement_poc.text_replace(COALESCE(s.study_version, NULL),'\\[|\\]|\\"|\'','') END,
         study_code_gs: s.study_name,
         phs_accession_gs: s.phs_accession,
         study_name_gs: s.study_name,
         study_data_types_gs: s.data_types
       } AS opensearch_data
-      SKIP $skip LIMIT $limit
       OPTIONAL MATCH (s)<--(f:file)
       OPTIONAL MATCH (f)-->(p:participant)
       WITH s, 
