@@ -1261,71 +1261,72 @@ Indices:
       study_data_types_gs:
         type: search_as_you_type
     # Cypher query will be used to retrieve data from Neo4j, and index into Elasticsearch
-    cypher_query: |
-      MATCH (s:study)<--(:file)
-      WITH s, 'Not specified in data' AS na
-      WITH DISTINCT s, {
-        study_name: s.study_name,
-        study_code: s.study_name,
-        study_acronym: s.study_acronym,
-        study_description: s.study_description,
-        short_description: s.short_description,
-        study_external_url: s.study_external_url,
-        primary_investigator_name: s.primary_investigator_name,
-        primary_investigator_email: s.primary_investigator_email,
-        co_investigator_name: s.co_investigator_name,
-        co_investigator_email: s.co_investigator_email,
-        phs_accession: s.phs_accession,
-        bioproject_accession: s.bioproject_accession,
-        index_date: s.index_date,
-        cds_requestor: s.cds_requestor,
-        funding_agency: s.funding_agency,
-        funding_source_program_name: s.funding_source_program_name,
-        grant_id: s.grant_id,
-        clinical_trial_system: s.clinical_trial_system,
-        clinical_trial_identifier: s.clinical_trial_identifier,
-        clinical_trial_arm: s.clinical_trial_arm,
-        organism_species: s.organism_species,
-        adult_or_childhood_study: s.adult_or_childhood_study,
-        data_types: s.data_types,
-        file_types: s.file_types,
-        data_access_level: s.data_access_level,
-        cds_primary_bucket: s.cds_primary_bucket,
-        cds_secondary_bucket: s.cds_secondary_bucket,
-        cds_tertiary_bucket: s.cds_tertiary_bucket,
-        number_of_participants: s.number_of_participants,
-        number_of_samples: s.number_of_samples,
-        study_data_types: s.study_data_types,
-        file_types_and_format: CASE WHEN s.file_types_and_format = '[]' THEN na ELSE apoc_replacement_poc.text_replace(s.file_types_and_format,'\\[|\\]|\\"|\'','') END,
-        size_of_data_being_uploaded: s.size_of_data_being_uploaded,
-        size_of_data_being_uploaded_unit: s.size_of_data_being_uploaded_unit,
-        size_of_data_being_uploaded_original: s.size_of_data_being_uploaded_original,
-        size_of_data_being_uploaded_original_unit: s.size_of_data_being_uploaded_original_unit,
-        acl: CASE WHEN s.acl = '[]' THEN na ELSE apoc_replacement_poc.text_replace(s.acl,'\\[|\\]|\\"|\'','') END,
-        study_access: s.study_access,
-        study_version: CASE WHEN s.study_version = '[]' THEN na ELSE apoc_replacement_poc.text_replace(s.study_version,'\\[|\\]|\\"|\'','') END,
-        study_code_gs: s.study_name,
-        phs_accession_gs: s.phs_accession,
-        study_name_gs: s.study_name,
-        study_data_types_gs: s.data_types
-      } AS opensearch_data
-      SKIP $skip LIMIT $limit
-      OPTIONAL MATCH (s)<--(f:file)
-      OPTIONAL MATCH (f)-->(p:participant)
-      WITH s, 
-        apoc_replacement_poc.merge(opensearch_data, {
-          number_of_participants: COUNT(DISTINCT p)
-        }) AS opensearch_data
-      OPTIONAL MATCH (s)<--(f:file)
-      OPTIONAL MATCH (f)-->(p:participant)
-      OPTIONAL MATCH (p)<--(samp:sample)
-      WITH s, 
-        apoc_replacement_poc.merge(opensearch_data, {
-          number_of_samples: COUNT(DISTINCT samp)
-        }) AS opensearch_data
-      RETURN opensearch_data
-      ORDER BY opensearch_data.study_code
-    page_size: 500
+    cypher_query: 
+      - query: |
+          MATCH (s:study)<--(:file)
+          WITH s, 'Not specified in data' AS na
+          WITH DISTINCT s, {
+            study_name: s.study_name,
+            study_code: s.study_name,
+            study_acronym: s.study_acronym,
+            study_description: s.study_description,
+            short_description: s.short_description,
+            study_external_url: s.study_external_url,
+            primary_investigator_name: s.primary_investigator_name,
+            primary_investigator_email: s.primary_investigator_email,
+            co_investigator_name: s.co_investigator_name,
+            co_investigator_email: s.co_investigator_email,
+            phs_accession: s.phs_accession,
+            bioproject_accession: s.bioproject_accession,
+            index_date: s.index_date,
+            cds_requestor: s.cds_requestor,
+            funding_agency: s.funding_agency,
+            funding_source_program_name: s.funding_source_program_name,
+            grant_id: s.grant_id,
+            clinical_trial_system: s.clinical_trial_system,
+            clinical_trial_identifier: s.clinical_trial_identifier,
+            clinical_trial_arm: s.clinical_trial_arm,
+            organism_species: s.organism_species,
+            adult_or_childhood_study: s.adult_or_childhood_study,
+            data_types: s.data_types,
+            file_types: s.file_types,
+            data_access_level: s.data_access_level,
+            cds_primary_bucket: s.cds_primary_bucket,
+            cds_secondary_bucket: s.cds_secondary_bucket,
+            cds_tertiary_bucket: s.cds_tertiary_bucket,
+            number_of_participants: s.number_of_participants,
+            number_of_samples: s.number_of_samples,
+            study_data_types: s.study_data_types,
+            file_types_and_format: CASE WHEN s.file_types_and_format = '[]' THEN na ELSE apoc_replacement_poc.text_replace(s.file_types_and_format,'\\[|\\]|\\"|\'','') END,
+            size_of_data_being_uploaded: s.size_of_data_being_uploaded,
+            size_of_data_being_uploaded_unit: s.size_of_data_being_uploaded_unit,
+            size_of_data_being_uploaded_original: s.size_of_data_being_uploaded_original,
+            size_of_data_being_uploaded_original_unit: s.size_of_data_being_uploaded_original_unit,
+            acl: CASE WHEN s.acl = '[]' THEN na ELSE apoc_replacement_poc.text_replace(s.acl,'\\[|\\]|\\"|\'','') END,
+            study_access: s.study_access,
+            study_version: CASE WHEN s.study_version = '[]' THEN na ELSE apoc_replacement_poc.text_replace(s.study_version,'\\[|\\]|\\"|\'','') END,
+            study_code_gs: s.study_name,
+            phs_accession_gs: s.phs_accession,
+            study_name_gs: s.study_name,
+            study_data_types_gs: s.data_types
+          } AS opensearch_data
+          SKIP $skip LIMIT $limit
+          OPTIONAL MATCH (s)<--(f:file)
+          OPTIONAL MATCH (f)-->(p:participant)
+          WITH s, 
+            apoc_replacement_poc.merge(opensearch_data, {
+              number_of_participants: COUNT(DISTINCT p)
+            }) AS opensearch_data
+          OPTIONAL MATCH (s)<--(f:file)
+          OPTIONAL MATCH (f)-->(p:participant)
+          OPTIONAL MATCH (p)<--(samp:sample)
+          WITH s, 
+            apoc_replacement_poc.merge(opensearch_data, {
+              number_of_samples: COUNT(DISTINCT samp)
+            }) AS opensearch_data
+          RETURN opensearch_data
+          ORDER BY opensearch_data.study_code
+        page_size: 500
   - index_name: diagnosis
     type: neo4j
     mapping:
@@ -2156,59 +2157,60 @@ Indices:
             type: keyword
           biosample_accession:
             type: keyword
-    cypher_query: |
-      MATCH (p:participant)
-      WITH p
-      SKIP $skip LIMIT $limit
-      OPTIONAL MATCH (s:study)<--(p)
-      WITH p, {
-          subject_id: p.participant_id,
-          study_acronym: s.study_acronym,
-          study_name: s.study_name,
-          sex: p.sex
-      } AS opensearch_data
-      OPTIONAL MATCH (p)<--(samp:sample)
-      WITH p, samp, opensearch_data, COLLECT(DISTINCT {
-              sample_id: samp.sample_id,
-              sample_type: TRIM(LAST(apoc_replacement_poc.text_split(samp.sample_type, ':'))),
-              sample_tumor_status: samp.sample_tumor_status,
-              sample_anatomic_site: TRIM(LAST(apoc_replacement_poc.text_split(samp.sample_anatomic_site, ':'))),
-              sample_age_at_collection: samp.sample_age_at_collection,
-              derived_from_specimen: samp.derived_from_specimen,
-              biosample_accession: samp.biosample_accession
-            }) as samp_then
-      WITH p,
-          apoc_replacement_poc.merge(opensearch_data, {
-              site: COLLECT(DISTINCT TRIM(LAST(apoc_replacement_poc.text_split(samp.sample_anatomic_site, ':')))),
-              samples: CASE WHEN samp IS NOT NULL THEN samp_then ELSE NULL END
-          }) AS opensearch_data
-      OPTIONAL MATCH (p)<--(diag:diagnosis)
-      WITH p,
-          apoc_replacement_poc.merge(opensearch_data, {
-              numberOfDiseaseSites: COUNT(DISTINCT diag.primary_site)
-          }) AS opensearch_data
-      OPTIONAL MATCH (p)<--(:sample)<--(f:file)
-      WITH p, f, opensearch_data, COLLECT(DISTINCT {
-              file_id: f.file_id,
-              file_name: f.file_name,
-              file_type: f.file_type,
-              file_description: f.file_description,
-              file_size: f.file_size,
-              md5sum: f.md5sum,
-              file_url_in_cds: f.file_url_in_cds,
-              experimental_strategy_and_data_subtypes: f.experimental_strategy_and_data_subtypes
-            }) as f_then
-      WITH p,
-        apoc_replacement_poc.merge(opensearch_data, {
-            files: CASE WHEN f IS NOT NULL THEN f_then ELSE NULL END
-        }) AS opensearch_data
-      WITH p, 
-        apoc_replacement_poc.merge(opensearch_data, {
-            numberOfFiles: size(opensearch_data.files),
-            numberOfSamples: COUNT(DISTINCT opensearch_data.samples)
-        }) AS opensearch_data
-      RETURN opensearch_data
-    page_size: 5000
+    cypher_query:
+      - query: |
+          MATCH (p:participant)
+          WITH p
+          SKIP $skip LIMIT $limit
+          OPTIONAL MATCH (s:study)<--(p)
+          WITH p, {
+              subject_id: p.participant_id,
+              study_acronym: s.study_acronym,
+              study_name: s.study_name,
+              sex: p.sex
+          } AS opensearch_data
+          OPTIONAL MATCH (p)<--(samp:sample)
+          WITH p, samp, opensearch_data, COLLECT(DISTINCT {
+                  sample_id: samp.sample_id,
+                  sample_type: TRIM(LAST(apoc_replacement_poc.text_split(samp.sample_type, ':'))),
+                  sample_tumor_status: samp.sample_tumor_status,
+                  sample_anatomic_site: TRIM(LAST(apoc_replacement_poc.text_split(samp.sample_anatomic_site, ':'))),
+                  sample_age_at_collection: samp.sample_age_at_collection,
+                  derived_from_specimen: samp.derived_from_specimen,
+                  biosample_accession: samp.biosample_accession
+                }) as samp_then
+          WITH p,
+              apoc_replacement_poc.merge(opensearch_data, {
+                  site: COLLECT(DISTINCT TRIM(LAST(apoc_replacement_poc.text_split(samp.sample_anatomic_site, ':')))),
+                  samples: CASE WHEN samp IS NOT NULL THEN samp_then ELSE NULL END
+              }) AS opensearch_data
+          OPTIONAL MATCH (p)<--(diag:diagnosis)
+          WITH p,
+              apoc_replacement_poc.merge(opensearch_data, {
+                  numberOfDiseaseSites: COUNT(DISTINCT diag.primary_site)
+              }) AS opensearch_data
+          OPTIONAL MATCH (p)<--(:sample)<--(f:file)
+          WITH p, f, opensearch_data, COLLECT(DISTINCT {
+                  file_id: f.file_id,
+                  file_name: f.file_name,
+                  file_type: f.file_type,
+                  file_description: f.file_description,
+                  file_size: f.file_size,
+                  md5sum: f.md5sum,
+                  file_url_in_cds: f.file_url_in_cds,
+                  experimental_strategy_and_data_subtypes: f.experimental_strategy_and_data_subtypes
+                }) as f_then
+          WITH p,
+            apoc_replacement_poc.merge(opensearch_data, {
+                files: CASE WHEN f IS NOT NULL THEN f_then ELSE NULL END
+            }) AS opensearch_data
+          WITH p, 
+            apoc_replacement_poc.merge(opensearch_data, {
+                numberOfFiles: size(opensearch_data.files),
+                numberOfSamples: COUNT(DISTINCT opensearch_data.samples)
+            }) AS opensearch_data
+          RETURN opensearch_data
+        page_size: 5000
   - index_name: subject_ids_list
     type: neo4j
     # type mapping for each property of the index
