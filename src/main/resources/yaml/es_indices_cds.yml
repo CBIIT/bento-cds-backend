@@ -1118,7 +1118,7 @@ Indices:
               associated_is_supplementary_file: associated_is_supplementary_file
             }) AS opensearch_data
           RETURN opensearch_data
-          ORDER BY opensearch_data.files
+          ORDER BY opensea rch_data.files
         page_size: 4000
   # Programs index
   - index_name: programs
@@ -1261,7 +1261,7 @@ Indices:
       study_data_types_gs:
         type: search_as_you_type
     # Cypher query will be used to retrieve data from Neo4j, and index into Elasticsearch
-    cypher_query: 
+    cypher_queries:
       - query: |
           MATCH (s:study)<--(:file)
           WITH s, 'Not specified in data' AS na
@@ -1327,6 +1327,7 @@ Indices:
           RETURN opensearch_data
           ORDER BY opensearch_data.study_code
         page_size: 500
+        
   - index_name: diagnosis
     type: neo4j
     mapping:
@@ -2157,7 +2158,7 @@ Indices:
             type: keyword
           biosample_accession:
             type: keyword
-    cypher_query:
+    cypher_queries:
       - query: |
           MATCH (p:participant)
           WITH p
