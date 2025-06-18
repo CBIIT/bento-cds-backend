@@ -1264,7 +1264,7 @@ Indices:
     cypher_queries:
       - query: |
           MATCH (s:study)<--(:file)
-          WITH DISTINCT s, 'Not specified in data' AS naAdd commentMore actions
+          WITH DISTINCT s, 'Not specified in data' AS na
           SKIP $skip LIMIT $limit
           WITH s, {
             study_name: s.study_name,
