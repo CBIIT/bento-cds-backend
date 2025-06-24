@@ -282,7 +282,7 @@ Indices:
             }) AS opensearch_data
           RETURN opensearch_data
           ORDER BY opensearch_data.subject_ids
-        page_size: 1000
+        page_size: 5000
   # Samples index
   - index_name: samples
     type: neo4j
@@ -568,7 +568,7 @@ Indices:
             }) AS opensearch_data
           RETURN opensearch_data
           ORDER BY opensearch_data.sample_id
-        page_size: 100
+        page_size: 50
     # Files index (split by study data types)Add commentMore actions
   - index_name: study_data_types
     type: neo4j
