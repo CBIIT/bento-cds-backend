@@ -423,7 +423,7 @@ Indices:
           WITH s, na,
             {
               accesses: apoc_replacement_poc.sort(COLLECT(DISTINCT COALESCE(s.study_access, na))),
-              acl: apoc_replacement_poc.sort(COLLECT(DISTINCT COALESCE(CASE WHEN s.acl = '[]' THEN na ELSE apoc_replacement_poc.text_replace(s.acl,'\\[|\\]|\\"|\'','') END, na))),
+              acl: apoc_replacement_poc.sort(COLLECT(DISTINCT COALESCE(CASE WHEN s.acl = '[]' OR s.acl IS NULL THEN na ELSE apoc_replacement_poc.text_replace(s.acl,'\\[|\\]|\\"|\'','') END, na))),
               phs_accession: apoc_replacement_poc.sort(COLLECT(DISTINCT COALESCE(s.phs_accession, na))),
               studies: apoc_replacement_poc.sort(COLLECT(DISTINCT COALESCE(s.study_name, na))),
               study_data_types:  apoc_replacement_poc.sort(apoc_replacement_poc.to_set(apoc_replacement_poc.flatten(COLLECT(apoc_replacement_poc.text_split(
