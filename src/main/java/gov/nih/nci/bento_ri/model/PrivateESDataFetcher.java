@@ -814,16 +814,28 @@ public class PrivateESDataFetcher extends AbstractPrivateESDataFetcher {
             query.put("sort", Map.of(sortFieldName, "asc"));
             query = addHighlight(query, category);
 
+            List<Map<String, Object>> objects;
             if (combinedCategories.contains(resultFieldName)) {
+                // For combined categories, use scroll API to get all data
                 query.put("size", ESService.MAX_ES_SIZE);
                 query.put("from", 0);
+                request.setJsonEntity(gson.toJson(query));
+                JsonObject jsonObject = esService.send(request);
+                objects = esService.collectPage(jsonObject, properties, highlights, ESService.MAX_ES_SIZE, 0);
             } else {
-                query.put("size", size);
-                query.put("from", offset);
+                // For regular categories, check if scroll is needed
+                if (size + offset > ESService.MAX_ES_SIZE) {
+                    // Use scroll API for large pagination requests
+                    objects = collectPageWithScroll(request, query, properties, highlights, size, offset);
+                } else {
+                    // Use regular pagination for smaller requests
+                    query.put("size", size);
+                    query.put("from", offset);
+                    request.setJsonEntity(gson.toJson(query));
+                    JsonObject jsonObject = esService.send(request);
+                    objects = esService.collectPage(jsonObject, properties, highlights, size, 0);
+                }
             }
-            request.setJsonEntity(gson.toJson(query));
-            JsonObject jsonObject = esService.send(request);
-            List<Map<String, Object>> objects = esService.collectPage(jsonObject, properties, highlights, (int)query.get("size"), 0);
 
             for (var object: objects) {
                 object.put(GS_CATEGORY_TYPE, category.get(GS_CATEGORY_TYPE));
@@ -850,6 +862,56 @@ public class PrivateESDataFetcher extends AbstractPrivateESDataFetcher {
         }
 
         return result;
+    }
+
+    /**
+     * Collect a page of data using scroll API when regular pagination exceeds OpenSearch limits
+     * This method handles highlights unlike the ESService.collectPageWithScroll method
+     */
+    private List<Map<String, Object>> collectPageWithScroll(
+            Request request, Map<String, Object> query, String[][] properties, String[][] highlights, int pageSize, int offset) throws IOException {
+        final int optimumSize = (ESService.MAX_ES_SIZE / pageSize) * pageSize;
+        if (offset % pageSize != 0) {
+            throw new IOException("'offset' must be multiple of 'first'!");
+        }
+        query.put("size", optimumSize);
+        request.setJsonEntity(gson.toJson(query));
+        request.addParameter("scroll", "10S");
+        JsonObject page = rollToPage(request, offset);
+        return esService.collectPage(page, properties, highlights, pageSize, offset % optimumSize);
+    }
+
+    /**
+     * Scroll to the specified page using OpenSearch scroll API
+     */
+    private JsonObject rollToPage(Request request, int offset) throws IOException {
+        int rolledRecords = 0;
+        JsonObject jsonObject = esService.send(request);
+        String scrollId = jsonObject.get("_scroll_id").getAsString();
+        JsonArray searchHits = jsonObject.getAsJsonObject("hits").getAsJsonArray("hits");
+        rolledRecords += searchHits.size();
+
+        while (rolledRecords <= offset && searchHits.size() > 0) {
+            // Keep scroll until correct page
+            logger.info("Current records: " + rolledRecords + " collecting...");
+            Request scrollRequest = new Request("POST", ESService.SCROLL_ENDPOINT);
+            Map<String, Object> scrollQuery = Map.of(
+                    "scroll", "10S",
+                    "scroll_id", scrollId
+            );
+            scrollRequest.setJsonEntity(gson.toJson(scrollQuery));
+            jsonObject = esService.send(scrollRequest);
+            scrollId = jsonObject.get("_scroll_id").getAsString();
+            searchHits = jsonObject.getAsJsonObject("hits").getAsJsonArray("hits");
+            rolledRecords += searchHits.size();
+        }
+
+        // Clean up scroll context
+        scrollId = jsonObject.get("_scroll_id").getAsString();
+        Request clearScrollRequest = new Request("DELETE", ESService.SCROLL_ENDPOINT);
+        clearScrollRequest.setJsonEntity("{\"scroll_id\":\"" + scrollId +"\"}");
+        esService.send(clearScrollRequest);
+        return jsonObject;
     }
 
     private List paginate(List org, int pageSize, int offset) {
