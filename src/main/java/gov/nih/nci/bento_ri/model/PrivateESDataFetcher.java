@@ -870,48 +870,53 @@ public class PrivateESDataFetcher extends AbstractPrivateESDataFetcher {
      */
     private List<Map<String, Object>> collectPageWithScroll(
             Request request, Map<String, Object> query, String[][] properties, String[][] highlights, int pageSize, int offset) throws IOException {
-        final int optimumSize = (ESService.MAX_ES_SIZE / pageSize) * pageSize;
-        if (offset % pageSize != 0) {
-            throw new IOException("'offset' must be multiple of 'first'!");
+        String scrollId = rollTo(offset, pageSize);
+        Request scrollRequest = buildScrollRequest(ESService.SCROLL_ENDPOINT, pageSize, scrollId);
+        JsonObject page = esService.send(scrollRequest);
+        
+        // Clean up scroll context to prevent resource leaks
+        try {
+            Request clearScrollRequest = new Request("DELETE", ESService.SCROLL_ENDPOINT);
+            clearScrollRequest.setJsonEntity("{\"scroll_id\":\"" + scrollId + "\"}");
+            esService.send(clearScrollRequest);
+        } catch (Exception e) {
+            logger.warn("Failed to clean up scroll context for scroll_id: " + scrollId, e);
         }
-        query.put("size", optimumSize);
-        request.setJsonEntity(gson.toJson(query));
-        request.addParameter("scroll", "10S");
-        JsonObject page = rollToPage(request, offset);
-        return esService.collectPage(page, properties, highlights, pageSize, offset % optimumSize);
+        
+        return esService.collectPage(page, properties, highlights, pageSize, 0);
     }
 
-    /**
-     * Scroll to the specified page using OpenSearch scroll API
-     */
-    private JsonObject rollToPage(Request request, int offset) throws IOException {
-        int rolledRecords = 0;
-        JsonObject jsonObject = esService.send(request);
-        String scrollId = jsonObject.get("_scroll_id").getAsString();
-        JsonArray searchHits = jsonObject.getAsJsonObject("hits").getAsJsonArray("hits");
-        rolledRecords += searchHits.size();
+    private String rollTo(int offset, int pageSize) throws IOException {
+        int rollTo = offset + pageSize - 1;
+        int maxScrolls = rollTo / ESService.MAX_ES_SIZE;
+        int remainingScroll = rollTo % ESService.MAX_ES_SIZE;
+        String scrollId = null;
 
-        while (rolledRecords <= offset && searchHits.size() > 0) {
-            // Keep scroll until correct page
-            logger.info("Current records: " + rolledRecords + " collecting...");
-            Request scrollRequest = new Request("POST", ESService.SCROLL_ENDPOINT);
-            Map<String, Object> scrollQuery = Map.of(
-                    "scroll", "10S",
-                    "scroll_id", scrollId
-            );
-            scrollRequest.setJsonEntity(gson.toJson(scrollQuery));
-            jsonObject = esService.send(scrollRequest);
-            scrollId = jsonObject.get("_scroll_id").getAsString();
-            searchHits = jsonObject.getAsJsonObject("hits").getAsJsonArray("hits");
-            rolledRecords += searchHits.size();
+        for (int i = 0; i < maxScrolls+1; i++){
+            int scrollSize = ESService.MAX_ES_SIZE;
+            if (i == maxScrolls){
+                scrollSize = remainingScroll;
+            }
+            Request scrollRequest = buildScrollRequest(ESService.SCROLL_ENDPOINT, scrollSize, scrollId);
+            JsonObject page = esService.send(scrollRequest);
+            scrollId = page.get("_scroll_id").getAsString();
         }
+        return scrollId;
+    }
 
-        // Clean up scroll context
-        scrollId = jsonObject.get("_scroll_id").getAsString();
-        Request clearScrollRequest = new Request("DELETE", ESService.SCROLL_ENDPOINT);
-        clearScrollRequest.setJsonEntity("{\"scroll_id\":\"" + scrollId +"\"}");
-        esService.send(clearScrollRequest);
-        return jsonObject;
+    private Request buildScrollRequest(String endpoint, int pageSize, String scrollId) throws IOException {
+        Request request = new Request("POST", endpoint);
+        Map<String, Object> scrollQuery = Map.of(
+                "scroll", "10S"
+        );
+        if (scrollId != null){
+            scrollQuery.put("scroll_id", scrollId);
+        }   
+        if (pageSize != ESService.MAX_ES_SIZE){
+            scrollQuery.put("size", pageSize);
+        }
+        request.setJsonEntity(gson.toJson(scrollQuery));
+        return request;
     }
 
     private List paginate(List org, int pageSize, int offset) {
