@@ -197,7 +197,7 @@ Indices:
                 '') END, '[;,]\\s{0,1}')), true))) AS experimental_strategies,
               apoc.coll.sort(COLLECT(DISTINCT COALESCE(toUpper(f.file_type), na))) AS file_types,
               apoc.coll.sort(COLLECT(DISTINCT COALESCE(f.file_id, na))) AS files,
-              apoc.coll.sort(COLLECT(DISTINCT COALESCE(f.is_supplementary_file, na))) AS is_supplementary_file
+              apoc.coll.sort(COLLECT(DISTINCT COALESCE(toStringOrNull(f.is_supplementary_file), na))) AS is_supplementary_file
           WITH p, na,
             apoc.map.merge(opensearch_data, {
               experimental_strategies: experimental_strategies,
@@ -490,7 +490,7 @@ Indices:
               '') END, '[;,]\\s{0,1}')), true))) AS experimental_strategies,
             apoc.coll.sort(COLLECT(DISTINCT COALESCE(toUpper(f.file_type), na))) AS file_types,
             apoc.coll.sort(COLLECT(DISTINCT COALESCE(f.file_id, na))) AS files,
-            apoc.coll.sort(COLLECT(DISTINCT COALESCE(f.is_supplementary_file, na))) AS is_supplementary_file
+            apoc.coll.sort(COLLECT(DISTINCT COALESCE(toStringOrNull(f.is_supplementary_file), na))) AS is_supplementary_file
           WITH samp, na,
             apoc.map.merge(opensearch_data, {
               experimental_strategies: experimental_strategies,
