@@ -139,7 +139,8 @@ Indices:
     cypher_queries:
       - query: |
           WITH 'Not specified in data' AS na
-          MATCH (s:study)<--(:file)-->(p:participant)
+          MATCH (s:study)<--(fs:file)
+          OPTIONAL MATCH (fs:file)-->(p:participant)
           WITH s, na,
             {
               accesses: apoc.coll.sort(COLLECT(DISTINCT COALESCE(s.study_access, na))),
@@ -430,7 +431,8 @@ Indices:
     cypher_queries:
       - query: |
           WITH 'Not specified in data' AS na
-          MATCH (s:study)<--(:file)-->(p:participant)
+          MATCH (s:study)<--(fs:file)
+          OPTIONAL MATCH (fs:file)-->(p:participant)
           WITH s, na,
             {
               accesses: apoc.coll.sort(COLLECT(DISTINCT COALESCE(s.study_access, na))),
@@ -654,7 +656,8 @@ Indices:
         type: keyword
     cypher_queries:
       - query: |
-          MATCH (s:study)<--(:file)-->(p:participant)
+          MATCH (s:study)<--(fs:file)
+          OPTIONAL MATCH (fs:file)-->(p:participant)
           WITH s, p, 'Not specified in data' AS na
           WITH s, na,
             {
@@ -846,7 +849,8 @@ Indices:
         type: keyword
     cypher_queries:
       - query: |
-          MATCH (s:study)<--(:file)-->(p:participant)
+          MATCH (s:study)<--(fs:file)
+          OPTIONAL MATCH (fs:file)-->(p:participant)
           WITH s, p, 'Not specified in data' AS na
           WITH s, na,
             {
@@ -1151,7 +1155,8 @@ Indices:
     # Cypher query will be used to retrieve data from Neo4j, and index into Elasticsearch
     cypher_queries:
       - query: |
-          MATCH (s:study)<--(:file)-->(p:participant)
+          MATCH (s:study)<--(fs:file)
+          OPTIONAL MATCH (fs:file)-->(p:participant)
           WITH s, p, 'Not specified in data' AS na
           WITH s, p, na, CASE WHEN s.acl = '[]' THEN na ELSE apoc.text.replace(s.acl,'\\[|\\]|\\"|\'','') END AS acl
           WITH s,
@@ -2077,7 +2082,8 @@ Indices:
         type: keyword
     # Cypher query will be used to retrieve data from Neo4j, and index into Elasticsearch
     cypher_query: |
-      MATCH (s:study)<--(:file)-->(p:participant)
+      MATCH (s:study)<--(fs:file)
+      OPTIONAL MATCH (fs:file)-->(p:participant)
       WITH DISTINCT p, s
       SKIP $skip LIMIT $limit
       RETURN
